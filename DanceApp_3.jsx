@@ -377,7 +377,7 @@ const PAYMENTS0 = [
 {id:"pm043",sid:"s13",amount:150,date:"2026-03-13",method:"Zelle",status:"paid",note:""},
 {id:"pm044",sid:"s2",amount:60,date:"2026-03-13",method:"Zelle",status:"paid",note:""},
 {id:"pm045",sid:"s65",amount:75,date:"2026-03-13",method:"Zelle",status:"paid",note:""},
-{id:"pm046",sid:"s7",amount:120,date:"2026-03-16",method:"Zelle",status:"paid",note:""}
+{id:"pm046",sid:"s7",amount:120,date:"2026-03-16",method:"Check",status:"paid",note:""}
 ];
 
 // ── Design tokens ─────────────────────────────────────────────────────────────

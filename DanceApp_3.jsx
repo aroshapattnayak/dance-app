@@ -1215,6 +1215,7 @@ export default function App() {
 
   const [quickPay, setQuickPay] = useState(false);
   const [syncStatus, setSyncStatus] = useState("loading"); // loading | synced | offline
+  const writeLock = useRef(0); // suppress onSnapshot briefly after local writes
 
   // ── Firestore: migrate seed data + real-time sync ──
   useEffect(() => {
@@ -1242,6 +1243,7 @@ export default function App() {
     }).then(() => {
       // Real-time listeners — data auto-syncs across all devices
       unsubStudents = fireDb.collection('students').onSnapshot(snap => {
+        if (Date.now() < writeLock.current) return; // skip stale snapshot during local write
         const data = snap.docs.map(d => d.data());
         if (data.length > 0) setStudents(data);
         setReady(true);
@@ -1249,6 +1251,7 @@ export default function App() {
       }, err => { console.error("Students listener error", err); setSyncStatus("offline"); setReady(true); });
 
       unsubPayments = fireDb.collection('payments').onSnapshot(snap => {
+        if (Date.now() < writeLock.current) return; // skip stale snapshot during local write
         const data = snap.docs.map(d => d.data());
         if (data.length > 0) setPayments(data);
       }, err => { console.error("Payments listener error", err); });
@@ -1261,25 +1264,30 @@ export default function App() {
     return () => { if (unsubStudents) unsubStudents(); if (unsubPayments) unsubPayments(); };
   }, []);
 
-  // CRUD — optimistic local update + Firestore write (onSnapshot confirms)
+  // CRUD — optimistic local update + Firestore write
+  // writeLock prevents onSnapshot from reverting optimistic updates with stale data
+  const lockAndWrite = (col, id, data, del) => {
+    writeLock.current = Date.now() + 2000; // suppress onSnapshot for 2 seconds
+    if (del) fsDel(col, id); else fsSet(col, id, data);
+  };
   const saveStu = s => {
     setStudents(p => p.find(x=>x.id===s.id) ? p.map(x=>x.id===s.id?s:x) : [...p,s]);
     setStuModal(null);
-    fsSet('students', s.id, s);
+    lockAndWrite('students', s.id, s);
   };
   const deleteStu = id => setConfirm({
     message:"This will permanently remove the student and all associated data.",
-    onConfirm:() => { setStudents(p=>p.filter(s=>s.id!==id)); setConfirm(null); fsDel('students', id); }
+    onConfirm:() => { setStudents(p=>p.filter(s=>s.id!==id)); setConfirm(null); lockAndWrite('students', id, null, true); }
   });
   const savePay = p => {
     setPayments(prev => prev.find(x=>x.id===p.id) ? prev.map(x=>x.id===p.id?p:x) : [...prev,p]);
     setPayModal(null);
     setQuickPay(false);
-    fsSet('payments', p.id, p);
+    lockAndWrite('payments', p.id, p);
   };
   const deletePay = id => setConfirm({
     message:"This will permanently delete this payment record.",
-    onConfirm:() => { setPayments(p=>p.filter(x=>x.id!==id)); setConfirm(null); fsDel('payments', id); }
+    onConfirm:() => { setPayments(p=>p.filter(x=>x.id!==id)); setConfirm(null); lockAndWrite('payments', id, null, true); }
   });
 
   // Zelle auto-match (called by conversation layer)

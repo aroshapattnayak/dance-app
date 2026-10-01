@@ -17,18 +17,28 @@ const C = {
 // ── Utilities ─────────────────────────────────────────────────────────────────
 const uid = () => Math.random().toString(36).slice(2, 9);
 const fmt$ = n => `$${Number(n).toFixed(2)}`;
-const fmtD = d => new Date(d).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+// "YYYY-MM-DD" strings are parsed as UTC midnight by Date, which shows the previous day in US timezones — parse them as local dates
+const fmtD = d => (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + "T12:00:00") : new Date(d)).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const thisMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; };
 const paidForMonth = (payments, sid, month) => payments.some(p => p.sid===sid && p.status==="paid" && (p.months ? p.months.includes(month) : p.date.startsWith(month)));
 const coversMonth = (p, month) => p.months ? p.months.includes(month) : p.date.startsWith(month);
 const getMonthChoices = () => { const out = []; for (let i = -6; i <= 3; i++) { const d = new Date(); d.setMonth(d.getMonth()+i); out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); } return out; };
 const monthLabel = m => new Date(m + "-15").toLocaleDateString("en-US", { month:"short", year:"2-digit" });
+const shiftMonthKey = (m, n) => { const [y, mo] = m.split("-").map(Number); const d = new Date(y, mo - 1 + n, 15); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; };
+// Payments sent on/after the 25th usually count toward the next month
+const zelleStartMonth = (item) => {
+  if (!item.messageDate) return thisMonth();
+  const base = item.messageDate.slice(0, 7);
+  return Number(item.messageDate.slice(8, 10)) >= 25 ? shiftMonthKey(base, 1) : base;
+};
+const defaultZelleMonths = (item, count) => Array.from({ length: Math.max(1, count) }, (_, i) => shiftMonthKey(zelleStartMonth(item), i));
 const parseZelleMessages = (text) => {
   const results = [];
   const re = /Zelle\s*\(?\s*R?\s*\)?\s*:\s*(.+?)\s+sent\s+you\s+\$([0-9,]+(?:\.[0-9]{2})?)/gi;
   let m;
   while ((m = re.exec(text)) !== null) {
-    results.push({ senderName: m[1].trim(), amount: parseFloat(m[2].replace(/,/g, "")), messageDate: new Date().toISOString().slice(0,10) });
+    results.push({ senderName: m[1].trim(), amount: parseFloat(m[2].replace(/,/g, "")), messageDate: todayStr() });
   }
   return results;
 };
@@ -542,7 +552,7 @@ const StudentModal = ({ student, onSave, onClose }) => {
 // ── Payment Modal ─────────────────────────────────────────────────────────────
 const PaymentModal = ({ payment, students, onSave, onClose }) => {
   const cm = thisMonth();
-  const [f, setF] = useState(payment || { sid:"", amount:"", date:new Date().toISOString().slice(0,10), method:"Zelle", status:"paid", note:"", months:[cm] });
+  const [f, setF] = useState(payment || { sid:"", amount:"", date:todayStr(), method:"Zelle", status:"paid", note:"", months:[cm] });
   const [sq, setSq] = useState("");
   const [showDrop, setShowDrop] = useState(false);
   const set = (k, v) => setF(p => ({ ...p, [k]:v }));
@@ -641,7 +651,7 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(null);
   const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0,10));
+  const [date, setDate] = useState(todayStr());
   const [method, setMethod] = useState("Zelle");
   const [note, setNote] = useState("");
   const [selMonths, setSelMonths] = useState([thisMonth()]);
@@ -665,8 +675,14 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
 
   const handleSave = () => {
     if (!sel || !amount) return;
+    const dups = selMonths.filter(m => payments.some(p => p.sid===sel.id && p.status==="paid" && coversMonth(p, m)));
+    if (dups.length && !window.confirm(`${sel.name} already has a payment recorded for ${dups.map(monthLabel).join(", ")}. Save another one anyway?`)) return;
     onSave({ id:uid(), sid:sel.id, amount:Number(amount), date, method, status:"paid", note, months:selMonths });
   };
+
+  // Existing paid records for the selected student, by month — used to warn about double-recording
+  const existingFor = (m) => sel ? payments.filter(p => p.sid===sel.id && p.status==="paid" && coversMonth(p, m)) : [];
+  const dupMonths = selMonths.filter(m => existingFor(m).length > 0);
 
   // Unpaid students for quick one-tap
   const paidIds = new Set(payments.filter(p=>p.status==="paid"&&coversMonth(p,cm)).map(p=>p.sid));
@@ -753,14 +769,25 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
           <div style={{ display:"grid", gap:12 }}>
             <Field label="Months covered">
               <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-                {choices.map(m => { const on = selMonths.includes(m); return (
+                {choices.map(m => { const on = selMonths.includes(m); const paid = existingFor(m).length > 0; return (
                   <button type="button" key={m} onClick={() => toggleMonth(m)}
-                    style={{ ...BTN_BASE, padding:"6px 12px", fontSize:13, background:on?`linear-gradient(135deg,${C.a600},${C.b700})`:C.a50, color:on?C.white:C.b800, border:on?"none":`1.5px solid ${C.a200}`, fontWeight:on?700:400 }}>
-                    {monthLabel(m)}
+                    style={{ ...BTN_BASE, padding:"6px 12px", fontSize:13, background:on?(paid?"#dc2626":`linear-gradient(135deg,${C.a600},${C.b700})`):paid?"#f0fdf4":C.a50, color:on?C.white:paid?"#059669":C.b800, border:on?"none":`1.5px solid ${paid?"#a7f3d0":C.a200}`, fontWeight:on||paid?700:400 }}>
+                    {monthLabel(m)}{paid ? " ✓" : ""}
                   </button>
                 ); })}
               </div>
+              <p style={{ fontSize:11, color:C.g500, marginTop:6 }}>✓ = payment already recorded for that month</p>
             </Field>
+            {dupMonths.length > 0 && (
+              <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:10, padding:"10px 12px" }}>
+                <p style={{ fontWeight:700, fontSize:13, color:"#991b1b", marginBottom:4 }}>Already recorded — possible double payment</p>
+                {dupMonths.map(m => existingFor(m).map(p => (
+                  <p key={m + p.id} style={{ fontSize:12, color:"#991b1b" }}>
+                    {monthLabel(m)}: {fmt$(p.amount)} {p.method} on {fmtD(p.date)}{p.months && p.months.length > 1 ? ` (covered ${p.months.map(monthLabel).join(", ")})` : ""}
+                  </p>
+                )))}
+              </div>
+            )}
             <Field label="Amount ($)"><input style={{ ...inputStyle, fontSize:18, fontWeight:700 }} type="number" inputMode="decimal" value={amount} onChange={e=>setAmount(e.target.value)}/></Field>
             <Field label="Date"><input style={inputStyle} type="date" value={date} onChange={e=>setDate(e.target.value)}/></Field>
             <Field label="Method">
@@ -777,8 +804,8 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
           </div>
           <div style={{ height:1, background:C.a100, margin:"16px 0" }}/>
           <button type="button" onClick={handleSave} disabled={!sel||!amount}
-            style={{ ...BTN_BASE, width:"100%", justifyContent:"center", padding:"14px 18px", fontSize:16, background:`linear-gradient(135deg,${C.a600},${C.b700})`, color:C.white, boxShadow:"0 3px 12px rgba(180,83,9,.28)", opacity:(!sel||!amount)?.5:1 }}>
-            <Icon name="check" size={18} color={C.white}/> Save Payment
+            style={{ ...BTN_BASE, width:"100%", justifyContent:"center", padding:"14px 18px", fontSize:16, background:dupMonths.length?"#dc2626":`linear-gradient(135deg,${C.a600},${C.b700})`, color:C.white, boxShadow:"0 3px 12px rgba(180,83,9,.28)", opacity:(!sel||!amount)?.5:1 }}>
+            <Icon name="check" size={18} color={C.white}/> {dupMonths.length ? "Save Anyway (duplicate)" : "Save Payment"}
           </button>
         </>
       )}
@@ -1283,6 +1310,42 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
   const unmatchedItems = pending.filter(q => q.status === "unmatched");
   const recentDone = zelleQueue.filter(q => q.status === "approved" || q.status === "dismissed").sort((a,b) => (b.resolvedAt||"").localeCompare(a.resolvedAt||"")).slice(0, 10);
 
+  // Months each pending item will be applied to — defaults until the user taps a chip
+  const [monthSel, setMonthSel] = useState({});
+  const suggestedCount = (q) => {
+    const stu = q.sid ? students.find(s=>s.id===q.sid) : null;
+    return stu && stu.fee > 0 ? Math.max(1, Math.round(q.amount / stu.fee)) : 1;
+  };
+  const monthsFor = (q) => monthSel[q.id] || defaultZelleMonths(q, suggestedCount(q));
+  const toggleItemMonth = (q, m) => {
+    const cur = monthsFor(q);
+    const next = cur.includes(m) ? cur.filter(x=>x!==m) : [...cur, m].sort();
+    setMonthSel(s => ({ ...s, [q.id]: next }));
+  };
+  const renderMonthPicker = (q) => {
+    const start = zelleStartMonth(q);
+    const choices = [-3,-2,-1,0,1,2].map(n => shiftMonthKey(start, n));
+    const sel = monthsFor(q);
+    return (
+      <div style={{ marginBottom:10 }}>
+        <p style={{ fontSize:11, fontWeight:700, color:C.g500, marginBottom:6 }}>Apply to month{sel.length > 1 ? "s" : ""}:</p>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+          {choices.map(m => {
+            const on = sel.includes(m);
+            const alreadyPaid = paidForMonth(payments, q.sid, m);
+            return (
+              <button type="button" key={m} onClick={() => toggleItemMonth(q, m)}
+                style={{ ...BTN_BASE, padding:"5px 10px", fontSize:12, borderRadius:20, background:on?C.b800:C.white, color:on?C.white:alreadyPaid?C.g300:C.b800, border:`1.5px solid ${on?C.b800:C.a200}` }}>
+                {monthLabel(m)}{alreadyPaid ? " ✓" : ""}
+              </button>
+            );
+          })}
+        </div>
+        {sel.length === 0 && <p style={{ fontSize:11, color:"#dc2626", marginTop:6 }}>Pick at least one month</p>}
+      </div>
+    );
+  };
+
   const handlePasteScan = () => {
     if (!pasteText.trim()) return;
     const parsed = parseZelleMessages(pasteText);
@@ -1311,6 +1374,7 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
             {stu.fee > 0 && item.amount > stu.fee && ` (covers ~${Math.round(item.amount/stu.fee)} months)`}
           </div>
         )}
+        {stu && renderMonthPicker(item)}
         <div style={{ display:"flex", gap:8 }}>{children}</div>
       </div>
     );
@@ -1374,25 +1438,19 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
             <p style={{ fontWeight:700, color:"#065f46", fontSize:14 }}>Auto-Matched ({autoItems.length})</p>
             {autoItems.length > 1 && (
-              <button type="button" onClick={() => autoItems.forEach(q => onApprove(q))}
+              <button type="button" onClick={() => autoItems.forEach(q => onApprove(q, monthsFor(q)))}
                 style={{ ...BTN_BASE, padding:"6px 14px", fontSize:12, background:"#d1fae5", color:"#065f46", border:"1.5px solid #a7f3d0" }}>
                 Approve All
               </button>
             )}
           </div>
           {autoItems.map(q => {
-            const aStu = q.sid ? students.find(s=>s.id===q.sid) : null;
-            const aMonths = aStu && aStu.fee > 0 && q.amount % aStu.fee === 0 ? Math.round(q.amount / aStu.fee) : 1;
+            const sel = monthsFor(q);
             return (
             <QueueCard key={q.id} item={q} borderColor="#10b981">
-              {aMonths > 1 && (
-                <div style={{ fontSize:12, color:"#065f46", background:"#d1fae5", borderRadius:8, padding:"6px 10px", marginBottom:8 }}>
-                  Covers {aMonths} months ({fmt$(aStu.fee)}/mo)
-                </div>
-              )}
-              <button type="button" onClick={() => onApprove(q)}
-                style={{ ...BTN_BASE, padding:"8px 16px", fontSize:13, background:"#d1fae5", color:"#065f46", border:"none", flex:1, justifyContent:"center" }}>
-                <Icon name="check" size={14}/> Approve{aMonths > 1 ? ` (${aMonths} mo)` : ""}
+              <button type="button" onClick={() => onApprove(q, sel)} disabled={!sel.length}
+                style={{ ...BTN_BASE, padding:"8px 16px", fontSize:13, background:"#d1fae5", color:"#065f46", border:"none", flex:1, justifyContent:"center", opacity:sel.length?1:.5 }}>
+                <Icon name="check" size={14}/> Approve for {sel.map(monthLabel).join(", ")}
               </button>
               <button type="button" onClick={() => onDismiss(q.id)}
                 style={{ ...BTN_BASE, padding:"8px 12px", fontSize:13, background:C.a50, color:C.g500, border:`1px solid ${C.a200}` }}>
@@ -1407,13 +1465,12 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
         <div style={{ marginBottom:20 }}>
           <p style={{ fontWeight:700, color:"#92400e", fontSize:14, marginBottom:10 }}>Needs Review ({reviewItems.length})</p>
           {reviewItems.map(q => {
-            const stu = q.sid ? students.find(s=>s.id===q.sid) : null;
-            const suggestedMonths = stu && stu.fee > 0 ? Math.max(1, Math.round(q.amount / stu.fee)) : 1;
+            const sel = monthsFor(q);
             return (
               <QueueCard key={q.id} item={q} borderColor="#f59e0b">
-                <button type="button" onClick={() => onApprove(q, suggestedMonths)}
-                  style={{ ...BTN_BASE, padding:"8px 16px", fontSize:13, background:"#fef3c7", color:"#92400e", border:"none", flex:1, justifyContent:"center" }}>
-                  <Icon name="check" size={14}/> Approve {suggestedMonths > 1 ? `(${suggestedMonths} months)` : ""}
+                <button type="button" onClick={() => onApprove(q, sel)} disabled={!sel.length}
+                  style={{ ...BTN_BASE, padding:"8px 16px", fontSize:13, background:"#fef3c7", color:"#92400e", border:"none", flex:1, justifyContent:"center", opacity:sel.length?1:.5 }}>
+                  <Icon name="check" size={14}/> Approve for {sel.map(monthLabel).join(", ")}
                 </button>
                 <button type="button" onClick={() => onDismiss(q.id)}
                   style={{ ...BTN_BASE, padding:"8px 12px", fontSize:13, background:C.a50, color:C.g500, border:`1px solid ${C.a200}` }}>
@@ -1447,6 +1504,7 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
               <div>
                 <span style={{ fontSize:13, color:C.b800 }}>{q.senderName}</span>
                 <span style={{ fontSize:12, color:C.g500, marginLeft:8 }}>{fmt$(q.amount)}</span>
+                {q.months && q.months.length > 0 && <span style={{ fontSize:11, color:C.g500, marginLeft:8 }}>→ {q.months.map(monthLabel).join(", ")}</span>}
               </div>
               <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:q.status==="approved"?"#d1fae5":"#fee2e2", color:q.status==="approved"?"#065f46":"#991b1b" }}>
                 {q.status==="approved"?"Approved":"Dismissed"}
@@ -1593,17 +1651,12 @@ export default function App() {
     onConfirm:() => { setPayments(p=>p.filter(x=>x.id!==id)); setConfirm(null); lockAndWrite('payments', id, null, true); }
   });
 
-  const approveZelle = (item, monthCount) => {
-    if (!item.sid) return;
-    const cm = thisMonth();
-    const stu = students.find(s => s.id === item.sid);
-    const mc = monthCount || (stu && stu.fee > 0 && item.amount % stu.fee === 0 ? Math.round(item.amount / stu.fee) : 1);
-    const months = [];
-    for (let i = 0; i < mc; i++) { const d = new Date(); d.setMonth(d.getMonth() - i); months.unshift(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); }
-    const pay = { id:uid(), sid:item.sid, amount:item.amount, date:item.messageDate||new Date().toISOString().slice(0,10), method:"Zelle", status:"paid", note:`Zelle from ${item.senderName}`, months };
+  const approveZelle = (item, months) => {
+    if (!item.sid || !months || !months.length) return;
+    const pay = { id:uid(), sid:item.sid, amount:item.amount, date:item.messageDate||todayStr(), method:"Zelle", status:"paid", note:`Zelle from ${item.senderName}`, months:[...months].sort() };
     setPayments(p => [...p, pay]);
     lockAndWrite('payments', pay.id, pay);
-    const updated = { ...item, status:"approved", resolvedAt:new Date().toISOString() };
+    const updated = { ...item, status:"approved", resolvedAt:new Date().toISOString(), months:pay.months };
     setZelleQueue(q => q.map(x => x.id===item.id ? updated : x));
     lockAndWrite('zelle_queue', item.id, updated);
   };
@@ -1622,7 +1675,7 @@ export default function App() {
       const s = students.find(st => st.active && st.parentName.toLowerCase().split(" ").some(part => name.toLowerCase().includes(part) && part.length > 2));
       if (s) {
         const already = paidForMonth(payments, s.id, cm);
-        if (!already) newPmts.push({ id:uid(), sid:s.id, amount:s.fee, date:new Date().toISOString().slice(0,10), method:"Zelle", status:"paid", note:"Auto-detected from iMessage", months:[cm] });
+        if (!already) newPmts.push({ id:uid(), sid:s.id, amount:s.fee, date:todayStr(), method:"Zelle", status:"paid", note:"Auto-detected from iMessage", months:[cm] });
         result.push({ studentName:s.name, senderName:name, alreadyPaid:already });
       }
     }

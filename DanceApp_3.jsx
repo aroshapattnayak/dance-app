@@ -550,7 +550,7 @@ const StudentModal = ({ student, onSave, onClose }) => {
 };
 
 // ── Payment Modal ─────────────────────────────────────────────────────────────
-const PaymentModal = ({ payment, students, onSave, onClose }) => {
+const PaymentModal = ({ payment, students, payments = [], onSave, onClose }) => {
   const cm = thisMonth();
   const [f, setF] = useState(payment || { sid:"", amount:"", date:todayStr(), method:"Zelle", status:"paid", note:"", months:[cm] });
   const [sq, setSq] = useState("");
@@ -573,6 +573,13 @@ const PaymentModal = ({ payment, students, onSave, onClose }) => {
     setF(p => ({ ...p, sid:s.id, amount:s.fee * selMonths.length }));
     setSq("");
     setShowDrop(false);
+  };
+  // Other paid records for this student, by month (excluding the one being edited) — used to warn about double-recording
+  const existingFor = (m) => f.sid ? payments.filter(p => p.sid===f.sid && p.id!==payment?.id && p.status==="paid" && coversMonth(p, m)) : [];
+  const dupMonths = f.status === "paid" ? selMonths.filter(m => existingFor(m).length > 0) : [];
+  const handleSave = () => {
+    if (dupMonths.length && !window.confirm(`${selStudent?.name || "This student"} already has a payment recorded for ${dupMonths.map(monthLabel).join(", ")}. Save anyway?`)) return;
+    onSave({ ...f, id:payment?.id||uid(), amount:Number(f.amount), months:selMonths });
   };
   return (
     <Modal onClose={onClose}>
@@ -613,14 +620,25 @@ const PaymentModal = ({ payment, students, onSave, onClose }) => {
         </Field>
         <Field label="Months covered">
           <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-            {choices.map(m => { const on = selMonths.includes(m); return (
+            {choices.map(m => { const on = selMonths.includes(m); const paid = existingFor(m).length > 0; return (
               <button type="button" key={m} onClick={() => toggleMonth(m)}
-                style={{ ...BTN_BASE, padding:"6px 12px", fontSize:13, background:on?`linear-gradient(135deg,${C.a600},${C.b700})`:C.a50, color:on?C.white:C.b800, border:on?"none":`1.5px solid ${C.a200}`, fontWeight:on?700:400 }}>
-                {monthLabel(m)}
+                style={{ ...BTN_BASE, padding:"6px 12px", fontSize:13, background:on?(paid?"#dc2626":`linear-gradient(135deg,${C.a600},${C.b700})`):paid?"#f0fdf4":C.a50, color:on?C.white:paid?"#059669":C.b800, border:on?"none":`1.5px solid ${paid?"#a7f3d0":C.a200}`, fontWeight:on||paid?700:400 }}>
+                {monthLabel(m)}{paid ? " ✓" : ""}
               </button>
             ); })}
           </div>
+          {f.sid && <p style={{ fontSize:11, color:C.g500, marginTop:6 }}>✓ = payment already recorded for that month</p>}
         </Field>
+        {dupMonths.length > 0 && (
+          <div style={{ background:"#fef2f2", border:"1.5px solid #fecaca", borderRadius:10, padding:"10px 12px" }}>
+            <p style={{ fontWeight:700, fontSize:13, color:"#991b1b", marginBottom:4 }}>Already recorded — possible double payment</p>
+            {dupMonths.map(m => existingFor(m).map(p => (
+              <p key={m + p.id} style={{ fontSize:12, color:"#991b1b" }}>
+                {monthLabel(m)}: {fmt$(p.amount)} {p.method} on {fmtD(p.date)}{p.months && p.months.length > 1 ? ` (covered ${p.months.map(monthLabel).join(", ")})` : ""}
+              </p>
+            )))}
+          </div>
+        )}
         <Field label="Amount ($)"><input style={inputStyle} type="number" value={f.amount} onChange={e=>set("amount",e.target.value)} placeholder="0.00"/></Field>
         <Field label="Date"><input style={inputStyle} type="date" value={f.date} onChange={e=>set("date",e.target.value)}/></Field>
         <Field label="Method">
@@ -640,7 +658,7 @@ const PaymentModal = ({ payment, students, onSave, onClose }) => {
       <div style={{ height:1, background:C.a100, margin:"18px 0" }}/>
       <div style={{ display:"flex", gap:8, justifyContent:"flex-end" }}>
         <Btn variant="secondary" onClick={onClose}>Cancel</Btn>
-        <Btn onClick={() => onSave({ ...f, id:payment?.id||uid(), amount:Number(f.amount), months:selMonths })}><Icon name="check" size={15}/>Save Payment</Btn>
+        <Btn onClick={handleSave}><Icon name="check" size={15}/>{dupMonths.length ? "Save Anyway (duplicate)" : "Save Payment"}</Btn>
       </div>
     </Modal>
   );
@@ -1866,6 +1884,7 @@ export default function App() {
           <PaymentModal
             payment={typeof payModal==="object" ? payModal : null}
             students={students}
+            payments={payments}
             onSave={savePay}
             onClose={() => setPayModal(null)}
           />

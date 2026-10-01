@@ -23,6 +23,15 @@ const paidForMonth = (payments, sid, month) => payments.some(p => p.sid===sid &&
 const coversMonth = (p, month) => p.months ? p.months.includes(month) : p.date.startsWith(month);
 const getMonthChoices = () => { const out = []; for (let i = -6; i <= 3; i++) { const d = new Date(); d.setMonth(d.getMonth()+i); out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); } return out; };
 const monthLabel = m => new Date(m + "-15").toLocaleDateString("en-US", { month:"short", year:"2-digit" });
+const parseZelleMessages = (text) => {
+  const results = [];
+  const re = /Zelle\s*\(?\s*R?\s*\)?\s*:\s*(.+?)\s+sent\s+you\s+\$([0-9,]+(?:\.[0-9]{2})?)/gi;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    results.push({ senderName: m[1].trim(), amount: parseFloat(m[2].replace(/,/g, "")), messageDate: new Date().toISOString().slice(0,10) });
+  }
+  return results;
+};
 
 // ── Firestore helpers ─────────────────────────────────────────────────────────
 const db = () => window.db;
@@ -955,6 +964,53 @@ const Dashboard = ({ students, payments, setPage, addPayment, addStudent }) => {
         </div>
       </div>
 
+      {/* Overdue students — missed 2+ months */}
+      {(() => {
+        const overdue = active.map(s => {
+          let missed = 0;
+          for (let i = 0; i < 6; i++) {
+            const d = new Date(); d.setMonth(d.getMonth() - i);
+            const mk = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+            if (!paidForMonth(payments, s.id, mk)) missed++;
+            else break;
+          }
+          return { ...s, missed };
+        }).filter(s => s.missed >= 2).sort((a,b) => b.missed - a.missed);
+        if (!overdue.length) return null;
+        const severeColor = m => m >= 4 ? "#dc2626" : m >= 3 ? "#ea580c" : "#d97706";
+        const severeBg   = m => m >= 4 ? "#fef2f2" : m >= 3 ? "#fff7ed" : "#fffbeb";
+        return (
+          <div style={{ ...CARD, marginBottom:14, borderLeft:`4px solid #dc2626` }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+              <Icon name="warn" color="#dc2626" size={16}/>
+              <p style={{ fontWeight:700, color:C.b800, fontSize:14 }}>Overdue ({overdue.length})</p>
+            </div>
+            <p style={{ fontSize:12, color:C.g500, marginBottom:12 }}>Students with 2+ consecutive months unpaid</p>
+            <div style={{ maxHeight:300, overflowY:"auto", marginRight:-4, paddingRight:4 }}>
+              {overdue.map(s => (
+                <div key={s.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${C.a100}` }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <div style={{ width:30, height:30, borderRadius:10, background:severeColor(s.missed), display:"flex", alignItems:"center", justifyContent:"center", color:C.white, fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:13, flexShrink:0 }}>
+                      {s.missed}
+                    </div>
+                    <div>
+                      <p style={{ fontWeight:700, fontSize:13, color:C.b800 }}>{s.name}</p>
+                      <p style={{ fontSize:11, color:C.g500 }}>{s.parentName} · {fmt$(s.fee)}/mo</p>
+                    </div>
+                  </div>
+                  <span style={{ fontSize:11, fontWeight:700, padding:"3px 10px", borderRadius:20, background:severeBg(s.missed), color:severeColor(s.missed) }}>
+                    {s.missed} mo
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize:12, color:C.g500, marginTop:10, fontWeight:700 }}>
+              Total overdue: {fmt$(overdue.reduce((t,s)=>t+s.fee*s.missed,0))}
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Unpaid for selected month */}
       {unpaid.length > 0 && (
         <div style={{ ...CARD, borderLeft:`4px solid ${C.a500}`, marginBottom:14 }}>
@@ -1217,71 +1273,184 @@ const InvoicesPage = ({ students, payments, onInvoice }) => {
 };
 
 // ── Zelle Page ────────────────────────────────────────────────────────────────
-const ZellePage = ({ students, payments }) => {
-  const [status, setStatus] = useState("idle");
-  const [matched, setMatched] = useState([]);
+const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onScanPaste }) => {
+  const cm = thisMonth();
+  const [showPaste, setShowPaste] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const pending = zelleQueue.filter(q => q.status === "auto" || q.status === "review" || q.status === "unmatched");
+  const autoItems = pending.filter(q => q.status === "auto");
+  const reviewItems = pending.filter(q => q.status === "review");
+  const unmatchedItems = pending.filter(q => q.status === "unmatched");
+  const recentDone = zelleQueue.filter(q => q.status === "approved" || q.status === "dismissed").sort((a,b) => (b.resolvedAt||"").localeCompare(a.resolvedAt||"")).slice(0, 10);
 
-  const doScan = async () => {
-    setStatus("scanning");
-    setMatched([]);
-    await new Promise(r => setTimeout(r, 900));
-    setStatus("tip");
+  const handlePasteScan = () => {
+    if (!pasteText.trim()) return;
+    const parsed = parseZelleMessages(pasteText);
+    if (parsed.length === 0) { alert("No Zelle payments found in the pasted text. Look for messages like: 'Chase | Zelle(R): NAME sent you $AMOUNT'"); return; }
+    onScanPaste(parsed);
+    setPasteText("");
+    setShowPaste(false);
+  };
+
+  const QueueCard = ({ item, borderColor, children }) => {
+    const stu = item.sid ? students.find(s=>s.id===item.sid) : null;
+    return (
+      <div style={{ ...CARD, marginBottom:10, borderLeft:`4px solid ${borderColor}`, position:"relative" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+          <div style={{ flex:1 }}>
+            <p style={{ fontWeight:700, color:C.b800, fontSize:14 }}>{item.senderName}</p>
+            {stu && <p style={{ fontSize:12, color:C.g500 }}>Matched to {stu.name} ({stu.parentName})</p>}
+            {!stu && <p style={{ fontSize:12, color:"#dc2626" }}>No matching student found</p>}
+            <p style={{ fontSize:11, color:C.g500, marginTop:2 }}>{item.messageDate ? fmtD(item.messageDate) : ""}</p>
+          </div>
+          <p style={{ fontWeight:700, fontSize:18, color:C.b800, flexShrink:0 }}>{fmt$(item.amount)}</p>
+        </div>
+        {stu && item.status !== "auto" && (
+          <div style={{ fontSize:12, color:"#92400e", background:"#fef3c7", borderRadius:8, padding:"6px 10px", marginBottom:8 }}>
+            Expected {fmt$(stu.fee)}/mo — received {fmt$(item.amount)}
+            {stu.fee > 0 && item.amount > stu.fee && ` (covers ~${Math.round(item.amount/stu.fee)} months)`}
+          </div>
+        )}
+        <div style={{ display:"flex", gap:8 }}>{children}</div>
+      </div>
+    );
   };
 
   return (
     <div>
-      <h1 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Zelle Scanner</h1>
-      <p style={{ color:C.g500, fontSize:13, marginBottom:20 }}>Auto-detect Zelle payments from your iMessages</p>
-
-      <div style={{ ...CARD, marginBottom:16, background:C.a50, border:`1.5px solid ${C.a200}` }}>
-        <div style={{ display:"flex", gap:14 }}>
-          <div style={{ width:44, height:44, borderRadius:14, background:C.a500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            <Icon name="zap" size={22} color={C.white}/>
-          </div>
-          <div>
-            <p style={{ fontWeight:700, color:C.b800, marginBottom:5 }}>How It Works</p>
-            <p style={{ fontSize:13, color:C.g500, lineHeight:1.6 }}>
-              Reads unread iMessages for Zelle payment notifications. If a sender's name matches a parent on your roster, that student is automatically marked as paid for this month.
-            </p>
-          </div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
+        <div>
+          <h1 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Zelle Scanner</h1>
+          <p style={{ color:C.g500, fontSize:13 }}>Auto-detect Zelle payments from your iMessages</p>
         </div>
+        <button type="button" onClick={() => setShowPaste(true)}
+          style={{ ...BTN_BASE, padding:"10px 18px", fontSize:13, background:C.a500, color:C.white, border:"none", borderRadius:12, fontWeight:700, gap:6, flexShrink:0 }}>
+          <Icon name="zap" size={15} color={C.white}/> Scan
+        </button>
       </div>
 
-      <button type="button" onClick={doScan} disabled={status==="scanning"}
-        style={{ ...BTN_BASE, background:`linear-gradient(135deg,${C.a600},${C.b700})`, color:C.white, boxShadow:"0 3px 12px rgba(180,83,9,.28)", width:"100%", justifyContent:"center", padding:"14px 18px", fontSize:15, marginBottom:16, opacity:status==="scanning"?.7:1 }}>
-        {status==="scanning" ? (
-          <><span style={{ display:"inline-block", width:16, height:16, border:`2px solid rgba(255,255,255,.3)`, borderTopColor:C.white, borderRadius:"50%", animation:"_da_spin 1s linear infinite" }}/>Scanning Messages…</>
-        ) : (
-          <><Icon name="refresh" size={16} color={C.white}/>Scan iMessages for Zelle Payments</>
-        )}
-      </button>
-
-      {status==="tip" && (
-        <div style={{ background:"#fef3c7", border:`1.5px solid ${C.a200}`, borderRadius:12, padding:16, marginBottom:16, display:"flex", gap:12 }}>
-          <Icon name="warn" color={C.a700} size={18}/>
-          <div>
-            <p style={{ fontWeight:700, color:C.b800, marginBottom:5 }}>Use Claude Chat to Scan Real Messages</p>
-            <p style={{ fontSize:13, color:C.b800, lineHeight:1.6 }}>
-              Type in the chat: <strong>"Scan my iMessages for Zelle payments"</strong> — Claude will read your messages and automatically mark matching students as paid here.
+      {showPaste && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={e => { if(e.target===e.currentTarget) setShowPaste(false); }}>
+          <div style={{ background:C.cream, borderRadius:20, padding:24, width:"100%", maxWidth:500, maxHeight:"80vh", overflow:"auto" }}>
+            <h2 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:20, marginBottom:12 }}>Paste Zelle Messages</h2>
+            <p style={{ fontSize:13, color:C.g500, marginBottom:4, lineHeight:1.5 }}>
+              Open <strong>Messages</strong> on your Mac, select the conversation from <strong>24273</strong> (Chase/Zelle), select all messages (<strong>Cmd+A</strong>), copy (<strong>Cmd+C</strong>), and paste below.
             </p>
+            <p style={{ fontSize:12, color:C.g500, marginBottom:14, lineHeight:1.4 }}>
+              The scanner looks for: "Zelle(R): NAME sent you $AMOUNT"
+            </p>
+            <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder={"Paste your Zelle messages here...\n\ne.g. Chase | Zelle(R): ARUN RAJA sent you $150.00 & it's ready now."}
+              style={{ width:"100%", minHeight:160, padding:14, borderRadius:12, border:`1.5px solid ${C.a200}`, fontFamily:"'Lato',sans-serif", fontSize:13, resize:"vertical", background:C.white, boxSizing:"border-box" }}/>
+            <div style={{ display:"flex", gap:10, marginTop:14, justifyContent:"flex-end" }}>
+              <button type="button" onClick={() => { setShowPaste(false); setPasteText(""); }}
+                style={{ ...BTN_BASE, padding:"10px 20px", fontSize:13, background:C.a50, color:C.g500, border:`1px solid ${C.a200}`, borderRadius:10 }}>Cancel</button>
+              <button type="button" onClick={handlePasteScan}
+                style={{ ...BTN_BASE, padding:"10px 20px", fontSize:13, background:C.a500, color:C.white, border:"none", borderRadius:10, fontWeight:700 }}>
+                <Icon name="zap" size={14} color={C.white}/> Process Messages
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {matched.length > 0 && (
+      {pending.length === 0 && !showPaste && (
+        <div style={{ ...CARD, marginBottom:16, background:C.a50, border:`1.5px solid ${C.a200}` }}>
+          <div style={{ display:"flex", gap:14 }}>
+            <div style={{ width:44, height:44, borderRadius:14, background:C.a500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <Icon name="zap" size={22} color={C.white}/>
+            </div>
+            <div>
+              <p style={{ fontWeight:700, color:C.b800, marginBottom:5 }}>No Pending Payments</p>
+              <p style={{ fontSize:13, color:C.g500, lineHeight:1.6 }}>
+                Tap <strong>Scan</strong> to paste your Chase Zelle messages. Matched payments will appear here for review.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {autoItems.length > 0 && (
         <div style={{ marginBottom:20 }}>
-          <p style={{ fontWeight:700, color:C.b800, marginBottom:10 }}>✅ {matched.length} Match{matched.length>1?"es":""} Found</p>
-          {matched.map((m,i) => (
-            <div key={i} style={{ ...CARD, marginBottom:10, borderLeft:"4px solid #10b981" }}>
-              <div style={{ display:"flex", justifyContent:"space-between" }}>
-                <div>
-                  <p style={{ fontWeight:700, color:C.b800 }}>{m.studentName}</p>
-                  <p style={{ fontSize:12, color:C.g500 }}>From: {m.senderName}</p>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+            <p style={{ fontWeight:700, color:"#065f46", fontSize:14 }}>Auto-Matched ({autoItems.length})</p>
+            {autoItems.length > 1 && (
+              <button type="button" onClick={() => autoItems.forEach(q => onApprove(q))}
+                style={{ ...BTN_BASE, padding:"6px 14px", fontSize:12, background:"#d1fae5", color:"#065f46", border:"1.5px solid #a7f3d0" }}>
+                Approve All
+              </button>
+            )}
+          </div>
+          {autoItems.map(q => {
+            const aStu = q.sid ? students.find(s=>s.id===q.sid) : null;
+            const aMonths = aStu && aStu.fee > 0 && q.amount % aStu.fee === 0 ? Math.round(q.amount / aStu.fee) : 1;
+            return (
+            <QueueCard key={q.id} item={q} borderColor="#10b981">
+              {aMonths > 1 && (
+                <div style={{ fontSize:12, color:"#065f46", background:"#d1fae5", borderRadius:8, padding:"6px 10px", marginBottom:8 }}>
+                  Covers {aMonths} months ({fmt$(aStu.fee)}/mo)
                 </div>
-                <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:m.alreadyPaid?"#e0e7ff":"#d1fae5", color:m.alreadyPaid?"#3730a3":"#065f46" }}>
-                  {m.alreadyPaid?"Already Paid":"✓ Marked Paid"}
-                </span>
+              )}
+              <button type="button" onClick={() => onApprove(q)}
+                style={{ ...BTN_BASE, padding:"8px 16px", fontSize:13, background:"#d1fae5", color:"#065f46", border:"none", flex:1, justifyContent:"center" }}>
+                <Icon name="check" size={14}/> Approve{aMonths > 1 ? ` (${aMonths} mo)` : ""}
+              </button>
+              <button type="button" onClick={() => onDismiss(q.id)}
+                style={{ ...BTN_BASE, padding:"8px 12px", fontSize:13, background:C.a50, color:C.g500, border:`1px solid ${C.a200}` }}>
+                Dismiss
+              </button>
+            </QueueCard>
+          ); })}
+        </div>
+      )}
+
+      {reviewItems.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <p style={{ fontWeight:700, color:"#92400e", fontSize:14, marginBottom:10 }}>Needs Review ({reviewItems.length})</p>
+          {reviewItems.map(q => {
+            const stu = q.sid ? students.find(s=>s.id===q.sid) : null;
+            const suggestedMonths = stu && stu.fee > 0 ? Math.max(1, Math.round(q.amount / stu.fee)) : 1;
+            return (
+              <QueueCard key={q.id} item={q} borderColor="#f59e0b">
+                <button type="button" onClick={() => onApprove(q, suggestedMonths)}
+                  style={{ ...BTN_BASE, padding:"8px 16px", fontSize:13, background:"#fef3c7", color:"#92400e", border:"none", flex:1, justifyContent:"center" }}>
+                  <Icon name="check" size={14}/> Approve {suggestedMonths > 1 ? `(${suggestedMonths} months)` : ""}
+                </button>
+                <button type="button" onClick={() => onDismiss(q.id)}
+                  style={{ ...BTN_BASE, padding:"8px 12px", fontSize:13, background:C.a50, color:C.g500, border:`1px solid ${C.a200}` }}>
+                  Dismiss
+                </button>
+              </QueueCard>
+            );
+          })}
+        </div>
+      )}
+
+      {unmatchedItems.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <p style={{ fontWeight:700, color:"#dc2626", fontSize:14, marginBottom:10 }}>Unmatched ({unmatchedItems.length})</p>
+          {unmatchedItems.map(q => (
+            <QueueCard key={q.id} item={q} borderColor="#f87171">
+              <button type="button" onClick={() => onDismiss(q.id)}
+                style={{ ...BTN_BASE, padding:"8px 12px", fontSize:13, background:C.a50, color:C.g500, border:`1px solid ${C.a200}`, flex:1, justifyContent:"center" }}>
+                Dismiss
+              </button>
+            </QueueCard>
+          ))}
+        </div>
+      )}
+
+      {recentDone.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <p style={{ fontWeight:700, color:C.g500, fontSize:13, marginBottom:8 }}>Recently Processed</p>
+          {recentDone.map(q => (
+            <div key={q.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", background:C.a50, borderRadius:10, marginBottom:4, opacity:.7 }}>
+              <div>
+                <span style={{ fontSize:13, color:C.b800 }}>{q.senderName}</span>
+                <span style={{ fontSize:12, color:C.g500, marginLeft:8 }}>{fmt$(q.amount)}</span>
               </div>
+              <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:q.status==="approved"?"#d1fae5":"#fee2e2", color:q.status==="approved"?"#065f46":"#991b1b" }}>
+                {q.status==="approved"?"Approved":"Dismissed"}
+              </span>
             </div>
           ))}
         </div>
@@ -1290,15 +1459,15 @@ const ZellePage = ({ students, payments }) => {
       {/* Parent roster */}
       <div>
         <p style={{ fontWeight:700, color:C.b800, marginBottom:8, fontSize:15 }}>Parent Roster</p>
-        <p style={{ fontSize:12, color:C.g500, marginBottom:12 }}>The scanner matches these names against message senders:</p>
+        <p style={{ fontSize:12, color:C.g500, marginBottom:12 }}>The scanner matches these names against Zelle senders:</p>
         <div style={{ display:"grid", gap:8 }}>
-          {students.filter(s=>s.active).map(s => {
-            const paid = paidForMonth(payments,s.id,thisMonth());
+          {students.filter(s=>s.active).sort((a,b)=>a.parentName.localeCompare(b.parentName)).map(s => {
+            const paid = paidForMonth(payments,s.id,cm);
             return (
               <div key={s.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"11px 14px", background:C.a50, borderRadius:12, border:`1px solid ${C.a100}` }}>
                 <div>
                   <p style={{ fontWeight:700, fontSize:13, color:C.b800 }}>{s.parentName}</p>
-                  <p style={{ fontSize:11, color:C.g500 }}>→ {s.name}</p>
+                  <p style={{ fontSize:11, color:C.g500 }}>{s.name} · {fmt$(s.fee)}/mo</p>
                 </div>
                 <span style={{ fontSize:11, fontWeight:700, padding:"2px 9px", borderRadius:20, background:paid?"#d1fae5":"#fef3c7", color:paid?"#065f46":"#92400e" }}>
                   {paid?"Paid":"Unpaid"}
@@ -1326,6 +1495,7 @@ export default function App() {
   const [page, setPage] = useState("dashboard");
   const [students, setStudents] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [zelleQueue, setZelleQueue] = useState([]);
   const [ready, setReady] = useState(false);
   const [wide, setWide] = useState(() => typeof window !== "undefined" ? window.innerWidth >= 768 : true);
 
@@ -1351,7 +1521,7 @@ export default function App() {
     const fireDb = window.db;
     if (!fireDb) { setReady(true); setSyncStatus("offline"); return; }
 
-    let unsubStudents = null, unsubPayments = null;
+    let unsubStudents = null, unsubPayments = null, unsubZelle = null;
 
     // Migration: if Firestore is empty, seed it with STUDENTS0 + PAYMENTS0
     fireDb.collection('students').limit(1).get().then(snap => {
@@ -1380,17 +1550,21 @@ export default function App() {
       }, err => { console.error("Students listener error", err); setSyncStatus("offline"); setReady(true); });
 
       unsubPayments = fireDb.collection('payments').onSnapshot(snap => {
-        if (Date.now() < writeLock.current) return; // skip stale snapshot during local write
+        if (Date.now() < writeLock.current) return;
         const data = snap.docs.map(d => d.data());
         if (data.length > 0) setPayments(data);
       }, err => { console.error("Payments listener error", err); });
+
+      unsubZelle = fireDb.collection('zelle_queue').onSnapshot(snap => {
+        setZelleQueue(snap.docs.map(d => d.data()));
+      }, err => { console.error("Zelle queue listener error", err); });
     }).catch(err => {
       console.error("Firestore init error", err);
       setSyncStatus("offline");
       setReady(true);
     });
 
-    return () => { if (unsubStudents) unsubStudents(); if (unsubPayments) unsubPayments(); };
+    return () => { if (unsubStudents) unsubStudents(); if (unsubPayments) unsubPayments(); if (unsubZelle) unsubZelle(); };
   }, []);
 
   // CRUD — optimistic local update + Firestore write
@@ -1419,6 +1593,28 @@ export default function App() {
     onConfirm:() => { setPayments(p=>p.filter(x=>x.id!==id)); setConfirm(null); lockAndWrite('payments', id, null, true); }
   });
 
+  const approveZelle = (item, monthCount) => {
+    if (!item.sid) return;
+    const cm = thisMonth();
+    const stu = students.find(s => s.id === item.sid);
+    const mc = monthCount || (stu && stu.fee > 0 && item.amount % stu.fee === 0 ? Math.round(item.amount / stu.fee) : 1);
+    const months = [];
+    for (let i = 0; i < mc; i++) { const d = new Date(); d.setMonth(d.getMonth() - i); months.unshift(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); }
+    const pay = { id:uid(), sid:item.sid, amount:item.amount, date:item.messageDate||new Date().toISOString().slice(0,10), method:"Zelle", status:"paid", note:`Zelle from ${item.senderName}`, months };
+    setPayments(p => [...p, pay]);
+    lockAndWrite('payments', pay.id, pay);
+    const updated = { ...item, status:"approved", resolvedAt:new Date().toISOString() };
+    setZelleQueue(q => q.map(x => x.id===item.id ? updated : x));
+    lockAndWrite('zelle_queue', item.id, updated);
+  };
+  const dismissZelle = (id) => {
+    const item = zelleQueue.find(q => q.id === id);
+    if (!item) return;
+    const updated = { ...item, status:"dismissed", resolvedAt:new Date().toISOString() };
+    setZelleQueue(q => q.map(x => x.id===id ? updated : x));
+    lockAndWrite('zelle_queue', id, updated);
+  };
+
   // Zelle auto-match (called by conversation layer)
   const applyZelleMatches = useCallback((senderNames) => {
     const cm = thisMonth(), newPmts = [], result = [];
@@ -1434,7 +1630,39 @@ export default function App() {
     return result;
   }, [students, payments]);
 
-  useEffect(() => { window.danceApp = { applyZelleMatches }; }, [applyZelleMatches]);
+  const matchZelleSender = useCallback((senderName) => {
+    const sLow = senderName.toLowerCase();
+    let best = null, bestScore = 0;
+    for (const st of students) {
+      if (!st.active) continue;
+      const parts = st.parentName.toLowerCase().split(/[\s/]+/).filter(p => p.length > 2);
+      const score = parts.filter(part => sLow.includes(part)).length;
+      if (score > bestScore) { bestScore = score; best = st; }
+    }
+    return best;
+  }, [students]);
+
+  const addToZelleQueue = useCallback((items) => {
+    const newItems = items.filter(item => !zelleQueue.some(q => q.senderName===item.senderName && q.amount===item.amount && q.messageDate===item.messageDate));
+    if (!newItems.length) return { added:0, skipped:items.length };
+    newItems.forEach(item => {
+      const s = matchZelleSender(item.senderName);
+      const qItem = {
+        id: item.id || uid(),
+        senderName: item.senderName,
+        amount: item.amount,
+        messageDate: item.messageDate,
+        scannedAt: new Date().toISOString(),
+        sid: s ? s.id : null,
+        status: s ? (Math.abs(item.amount - s.fee) < 0.01 || item.amount % s.fee === 0 ? "auto" : "review") : "unmatched",
+      };
+      setZelleQueue(q => [...q, qItem]);
+      fsSet('zelle_queue', qItem.id, qItem);
+    });
+    return { added:newItems.length, skipped:items.length - newItems.length };
+  }, [students, zelleQueue, matchZelleSender]);
+
+  useEffect(() => { window.danceApp = { applyZelleMatches, addToZelleQueue }; }, [applyZelleMatches, addToZelleQueue]);
 
   const renderPage = () => {
     switch (page) {
@@ -1442,7 +1670,7 @@ export default function App() {
       case "students":  return <StudentsPage students={students} payments={payments} onAdd={()=>setStuModal("add")} onEdit={s=>setStuModal(s)} onDelete={deleteStu} onInvoice={s=>setInvModal(s)}/>;
       case "payments":  return <PaymentsPage payments={payments} students={students} onAdd={()=>setPayModal("add")} onEdit={p=>setPayModal(p)} onDelete={deletePay}/>;
       case "invoices":  return <InvoicesPage students={students} payments={payments} onInvoice={s=>setInvModal(s)}/>;
-      case "messages":  return <ZellePage students={students} payments={payments}/>;
+      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle} onScanPaste={addToZelleQueue}/>;
     }
   };
 

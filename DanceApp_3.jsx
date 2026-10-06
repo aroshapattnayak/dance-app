@@ -3,15 +3,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 // ── Fonts ─────────────────────────────────────────────────────────────────────
 const fl = document.createElement("link");
 fl.rel = "stylesheet";
-fl.href = "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap";
+fl.href = "https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;700&display=swap";
 document.head.appendChild(fl);
 
 // ── Colors ────────────────────────────────────────────────────────────────────
 const C = {
-  cream:"#fdf8f0", a50:"#fffbeb", a100:"#fef3c7", a200:"#fde68a",
-  a400:"#fbbf24", a500:"#f59e0b", a600:"#d97706", a700:"#b45309",
-  b700:"#92400e", b800:"#78350f", b900:"#451a03",
-  white:"#ffffff", g300:"#d4c5b0", g500:"#8b7355", g700:"#4a3728",
+  cream:"#faf5ec", a50:"#fef8ec", a100:"#f5e4c0", a200:"#edda92",
+  a400:"#d4af37", a500:"#c5a030", a600:"#a68530", a700:"#866b20",
+  b700:"#8b1a34", b800:"#6b1528", b900:"#4a0e1a",
+  white:"#ffffff", g300:"#c9bba9", g500:"#7d6e5c", g700:"#3d2f23",
 };
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -407,8 +407,8 @@ const PAYMENTS0 = [
 ];
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
-const CARD = { background:C.white, borderRadius:18, padding:20, boxShadow:"0 4px 24px rgba(120,53,15,.1)", border:"1px solid rgba(253,230,138,.4)" };
-const BTN_BASE = { fontFamily:"'Lato',sans-serif", fontWeight:700, border:"none", borderRadius:10, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:6, fontSize:14, padding:"10px 18px", whiteSpace:"nowrap", transition:"transform .15s, box-shadow .15s", outline:"none" };
+const CARD = { background:C.white, borderRadius:20, padding:22, boxShadow:"0 1px 3px rgba(0,0,0,.04), 0 4px 12px rgba(0,0,0,.04)" };
+const BTN_BASE = { fontFamily:"'DM Sans',sans-serif", fontWeight:700, border:"none", borderRadius:10, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:6, fontSize:14, padding:"10px 18px", whiteSpace:"nowrap", transition:"transform .15s, box-shadow .15s", outline:"none" };
 
 // ── Primitives ────────────────────────────────────────────────────────────────
 const Icon = ({ name, size=18, color="currentColor" }) => {
@@ -441,7 +441,7 @@ const Icon = ({ name, size=18, color="currentColor" }) => {
 const Avatar = ({ name="?", size=42 }) => {
   const grads = [`135deg,${C.a400},${C.b700}`, `135deg,${C.a500},${C.b800}`, `135deg,#fcd34d,${C.a700}`];
   return (
-    <div style={{ width:size, height:size, borderRadius:size*.35, background:`linear-gradient(${grads[name.charCodeAt(0)%3]})`, display:"flex", alignItems:"center", justifyContent:"center", color:C.white, fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:size*.42, flexShrink:0 }}>
+    <div style={{ width:size, height:size, borderRadius:size*.35, background:`linear-gradient(${grads[name.charCodeAt(0)%3]})`, display:"flex", alignItems:"center", justifyContent:"center", color:C.white, fontFamily:"'DM Serif Display',serif", fontWeight:700, fontSize:size*.42, flexShrink:0 }}>
       {name[0]}
     </div>
   );
@@ -463,7 +463,7 @@ const Badge = ({ status }) => {
 // Button with explicit type="button" to prevent any form submission edge cases
 const Btn = ({ variant="primary", sm=false, onClick, disabled=false, children, style:sx={}, href, type="button" }) => {
   const variants = {
-    primary:   { background:`linear-gradient(135deg,${C.a600},${C.b700})`, color:C.white, boxShadow:"0 3px 12px rgba(180,83,9,.28)" },
+    primary:   { background:`linear-gradient(135deg,${C.a600},${C.b700})`, color:C.white, boxShadow:"0 3px 12px rgba(107,21,40,.28)" },
     secondary: { background:C.a100, color:C.b800, border:`1.5px solid ${C.a200}` },
     ghost:     { background:"transparent", color:C.g500, padding:"8px 12px" },
     danger:    { background:"#fef2f2", color:"#b91c1c", border:"1.5px solid #fecaca" },
@@ -492,16 +492,16 @@ const Field = ({ label, children }) => (
   </div>
 );
 
-const inputStyle = { fontFamily:"'Lato',sans-serif", background:C.white, border:`1.5px solid ${C.g300}`, borderRadius:10, padding:"10px 14px", fontSize:14, color:C.g700, width:"100%", outline:"none", display:"block" };
+const inputStyle = { fontFamily:"'DM Sans',sans-serif", background:C.white, border:`1.5px solid ${C.g300}`, borderRadius:10, padding:"10px 14px", fontSize:14, color:C.g700, width:"100%", outline:"none", display:"block" };
 
 // ── Confirm Dialog (replaces window.confirm) ──────────────────────────────────
 const ConfirmDialog = ({ message, onConfirm, onCancel }) => (
-  <div style={{ position:"fixed", inset:0, background:"rgba(69,26,3,.6)", backdropFilter:"blur(4px)", zIndex:10000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-    <div style={{ background:C.white, borderRadius:20, padding:28, width:"100%", maxWidth:360, boxShadow:"0 20px 60px rgba(120,53,15,.3)" }}>
+  <div style={{ position:"fixed", inset:0, background:"rgba(48,10,18,.6)", backdropFilter:"blur(4px)", zIndex:10000, display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+    <div style={{ background:C.white, borderRadius:20, padding:28, width:"100%", maxWidth:360, boxShadow:"0 20px 60px rgba(74,14,26,.3)" }}>
       <div style={{ width:48, height:48, borderRadius:16, background:"#fef2f2", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
         <Icon name="trash" size={22} color="#dc2626"/>
       </div>
-      <h3 style={{ fontFamily:"'Playfair Display',serif", color:C.b800, marginBottom:8, fontSize:18 }}>Confirm Delete</h3>
+      <h3 style={{ fontFamily:"'DM Serif Display',serif", color:C.b800, marginBottom:8, fontSize:18 }}>Confirm Delete</h3>
       <p style={{ color:C.g500, fontSize:14, marginBottom:22, lineHeight:1.5 }}>{message}</p>
       <div style={{ display:"flex", gap:10, justifyContent:"flex-end" }}>
         <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
@@ -513,8 +513,8 @@ const ConfirmDialog = ({ message, onConfirm, onCancel }) => (
 
 // ── Drawer / Modal wrapper ────────────────────────────────────────────────────
 const Modal = ({ onClose, children, maxWidth=480 }) => (
-  <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(69,26,3,.52)", backdropFilter:"blur(5px)", zIndex:9000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
-    <div onClick={e => e.stopPropagation()} style={{ background:C.white, borderRadius:22, padding:26, width:"100%", maxWidth, boxShadow:"0 20px 60px rgba(120,53,15,.25)", maxHeight:"92vh", overflowY:"auto" }}>
+  <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(48,10,18,.52)", backdropFilter:"blur(5px)", zIndex:9000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
+    <div onClick={e => e.stopPropagation()} style={{ background:C.white, borderRadius:22, padding:26, width:"100%", maxWidth, boxShadow:"0 20px 60px rgba(74,14,26,.25)", maxHeight:"92vh", overflowY:"auto" }}>
       {children}
     </div>
   </div>
@@ -527,7 +527,7 @@ const StudentModal = ({ student, onSave, onClose }) => {
   return (
     <Modal onClose={onClose}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-        <h3 style={{ fontFamily:"'Playfair Display',serif", color:C.b800, fontSize:20 }}>{student ? "Edit Student" : "New Student"}</h3>
+        <h3 style={{ fontFamily:"'DM Serif Display',serif", color:C.b800, fontSize:20 }}>{student ? "Edit Student" : "New Student"}</h3>
         <Btn variant="ghost" sm onClick={onClose}><Icon name="x" size={16}/></Btn>
       </div>
       <div style={{ display:"grid", gap:13 }}>
@@ -584,7 +584,7 @@ const PaymentModal = ({ payment, students, payments = [], onSave, onClose }) => 
   return (
     <Modal onClose={onClose}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-        <h3 style={{ fontFamily:"'Playfair Display',serif", color:C.b800, fontSize:20 }}>{payment ? "Edit Payment" : "Record Payment"}</h3>
+        <h3 style={{ fontFamily:"'DM Serif Display',serif", color:C.b800, fontSize:20 }}>{payment ? "Edit Payment" : "Record Payment"}</h3>
         <Btn variant="ghost" sm onClick={onClose}><Icon name="x" size={16}/></Btn>
       </div>
       <div style={{ display:"grid", gap:13 }}>
@@ -602,10 +602,10 @@ const PaymentModal = ({ payment, students, payments = [], onSave, onClose }) => 
               <input style={inputStyle} value={sq} onChange={e=>{ setSq(e.target.value); setShowDrop(true); }}
                 placeholder="Type student or parent name..." autoComplete="off" autoFocus={!payment}/>
               {showDrop && searchMatches.length > 0 && (
-                <div style={{ position:"absolute", top:"100%", left:0, right:0, background:C.white, border:`1px solid ${C.a200}`, borderRadius:10, boxShadow:"0 8px 24px rgba(120,53,15,.12)", maxHeight:200, overflowY:"auto", zIndex:10 }}>
+                <div style={{ position:"absolute", top:"100%", left:0, right:0, background:C.white, border:`1px solid ${C.a200}`, borderRadius:10, boxShadow:"0 8px 24px rgba(74,14,26,.12)", maxHeight:200, overflowY:"auto", zIndex:10 }}>
                   {searchMatches.map(s => (
                     <button type="button" key={s.id} onClick={() => pickStudent(s)}
-                      style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", border:"none", borderBottom:`1px solid ${C.a100}`, background:C.white, cursor:"pointer", fontFamily:"'Lato',sans-serif", textAlign:"left" }}>
+                      style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 14px", border:"none", borderBottom:`1px solid ${C.a100}`, background:C.white, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", textAlign:"left" }}>
                       <div>
                         <p style={{ fontWeight:700, fontSize:13, color:C.b800 }}>{s.name}</p>
                         <p style={{ fontSize:11, color:C.g500 }}>{s.parentName}</p>
@@ -709,7 +709,7 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
   return (
     <Modal onClose={onClose}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
-        <h3 style={{ fontFamily:"'Playfair Display',serif", color:C.b800, fontSize:20 }}>Quick Pay</h3>
+        <h3 style={{ fontFamily:"'DM Serif Display',serif", color:C.b800, fontSize:20 }}>Quick Pay</h3>
         <Btn variant="ghost" sm onClick={onClose}><Icon name="x" size={16}/></Btn>
       </div>
 
@@ -733,7 +733,7 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
                 const paid = paidIds.has(s.id);
                 return (
                   <button type="button" key={s.id} onClick={() => selectStudent(s)}
-                    style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 14px", border:"none", borderBottom:`1px solid ${C.a100}`, background:paid?"#f0fdf4":C.white, cursor:"pointer", fontFamily:"'Lato',sans-serif", textAlign:"left" }}>
+                    style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 14px", border:"none", borderBottom:`1px solid ${C.a100}`, background:paid?"#f0fdf4":C.white, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", textAlign:"left" }}>
                     <div>
                       <p style={{ fontWeight:700, fontSize:14, color:C.b800 }}>{s.name}</p>
                       <p style={{ fontSize:12, color:C.g500 }}>{s.parentName}</p>
@@ -757,9 +757,9 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
               <div style={{ maxHeight:300, overflowY:"auto" }}>
                 {unpaid.map(s => (
                   <button type="button" key={s.id} onClick={() => selectStudent(s)}
-                    style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"11px 12px", border:"none", borderBottom:`1px solid ${C.a100}`, background:C.white, cursor:"pointer", fontFamily:"'Lato',sans-serif", textAlign:"left" }}>
+                    style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"11px 12px", border:"none", borderBottom:`1px solid ${C.a100}`, background:C.white, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", textAlign:"left" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                      <div style={{ width:30, height:30, borderRadius:10, background:`linear-gradient(135deg,${C.a400},${C.b700})`, display:"flex", alignItems:"center", justifyContent:"center", color:C.white, fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:13, flexShrink:0 }}>
+                      <div style={{ width:30, height:30, borderRadius:10, background:`linear-gradient(135deg,${C.a400},${C.b700})`, display:"flex", alignItems:"center", justifyContent:"center", color:C.white, fontFamily:"'DM Serif Display',serif", fontWeight:700, fontSize:13, flexShrink:0 }}>
                         {s.name[0]}
                       </div>
                       <div>
@@ -822,7 +822,7 @@ const QuickPayModal = ({ students, payments, onSave, onClose }) => {
           </div>
           <div style={{ height:1, background:C.a100, margin:"16px 0" }}/>
           <button type="button" onClick={handleSave} disabled={!sel||!amount}
-            style={{ ...BTN_BASE, width:"100%", justifyContent:"center", padding:"14px 18px", fontSize:16, background:dupMonths.length?"#dc2626":`linear-gradient(135deg,${C.a600},${C.b700})`, color:C.white, boxShadow:"0 3px 12px rgba(180,83,9,.28)", opacity:(!sel||!amount)?.5:1 }}>
+            style={{ ...BTN_BASE, width:"100%", justifyContent:"center", padding:"14px 18px", fontSize:16, background:dupMonths.length?"#dc2626":`linear-gradient(135deg,${C.a600},${C.b700})`, color:C.white, boxShadow:"0 3px 12px rgba(107,21,40,.28)", opacity:(!sel||!amount)?.5:1 }}>
             <Icon name="check" size={18} color={C.white}/> {dupMonths.length ? "Save Anyway (duplicate)" : "Save Payment"}
           </button>
         </>
@@ -842,8 +842,8 @@ const InvoiceModal = ({ student, payments, onClose }) => {
       <div style={{ background:`linear-gradient(135deg,${C.b800},${C.a600})`, borderRadius:14, padding:22, color:C.white, marginBottom:20 }}>
         <div style={{ display:"flex", justifyContent:"space-between", marginBottom:14 }}>
           <div>
-            <p style={{ fontSize:10, opacity:.65, textTransform:"uppercase", letterSpacing:".12em" }}>Dance Studio · Invoice</p>
-            <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:22, marginTop:4 }}>{student.name}</h2>
+            <p style={{ fontSize:10, opacity:.65, textTransform:"uppercase", letterSpacing:".12em" }}>Arohana Natyalaya · Invoice</p>
+            <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, marginTop:4 }}>{student.name}</h2>
           </div>
           <div style={{ textAlign:"right" }}>
             <p style={{ fontSize:10, opacity:.65 }}>Issued</p>
@@ -865,7 +865,7 @@ const InvoiceModal = ({ student, payments, onClose }) => {
         </div>
       </div>
 
-      <h4 style={{ fontFamily:"'Playfair Display',serif", color:C.b800, marginBottom:12 }}>Payment History</h4>
+      <h4 style={{ fontFamily:"'DM Serif Display',serif", color:C.b800, marginBottom:12 }}>Payment History</h4>
       <div style={{ maxHeight:230, overflowY:"auto", marginBottom:16 }}>
         {sp.length===0
           ? <p style={{ color:C.g500, textAlign:"center", padding:28, fontSize:13 }}>No payments recorded yet</p>
@@ -886,7 +886,7 @@ const InvoiceModal = ({ student, payments, onClose }) => {
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", paddingTop:12, borderTop:`2px solid ${C.a200}` }}>
         <div>
           <p style={{ fontSize:12, color:C.g500 }}>All-time total paid</p>
-          <h3 style={{ fontFamily:"'Playfair Display',serif", color:C.b800, fontSize:22 }}>{fmt$(total)}</h3>
+          <h3 style={{ fontFamily:"'DM Serif Display',serif", color:C.b800, fontSize:22 }}>{fmt$(total)}</h3>
         </div>
         <Btn variant="secondary" onClick={onClose}><Icon name="x" size={15}/>Close</Btn>
       </div>
@@ -900,7 +900,7 @@ const StatCard = ({ label, value, sub, icon, color }) => (
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
       <div>
         <p style={{ fontSize:11, color:C.g500, fontWeight:700, textTransform:"uppercase", letterSpacing:".07em" }}>{label}</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:26, marginTop:3, color:C.b800 }}>{value}</h2>
+        <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:26, marginTop:3, color:C.b800 }}>{value}</h2>
         {sub && <p style={{ fontSize:11, color:C.g500, marginTop:2 }}>{sub}</p>}
       </div>
       <div style={{ width:42, height:42, borderRadius:13, background:color+"22", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -950,62 +950,67 @@ const Dashboard = ({ students, payments, setPage, addPayment, addStudent }) => {
 
   return (
     <div>
-      <h1 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:28, marginBottom:4 }}>Good day! 🌟</h1>
-
-      {/* Month navigator */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18 }}>
-        <button type="button" onClick={() => shiftMonth(-1)} style={{ ...BTN_BASE, padding:"8px 12px", background:C.a100, color:C.b800, border:`1.5px solid ${C.a200}` }}>
-          ←
-        </button>
-        <div style={{ textAlign:"center" }}>
-          <p style={{ fontWeight:700, color:C.b800, fontSize:16 }}>{monthLabel}</p>
-          {!isCurrent && <button type="button" onClick={() => setSelMonth(thisMonth())} style={{ background:"none", border:"none", color:C.a600, fontSize:12, fontWeight:700, cursor:"pointer", fontFamily:"'Lato',sans-serif", marginTop:2 }}>Back to current →</button>}
+      {/* Hero card */}
+      <div style={{ background:`linear-gradient(145deg,${C.b800},${C.b900})`, borderRadius:24, padding:"24px 22px 22px", color:C.white, marginBottom:20 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <button type="button" onClick={() => shiftMonth(-1)} style={{ background:"rgba(255,255,255,.1)", border:"none", borderRadius:10, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", color:C.white, fontFamily:"'DM Sans',sans-serif" }}>←</button>
+          <div style={{ textAlign:"center" }}>
+            <p style={{ fontSize:14, fontWeight:600, opacity:.85 }}>{monthLabel}</p>
+            {!isCurrent && <button type="button" onClick={() => setSelMonth(thisMonth())} style={{ background:"none", border:"none", color:C.a400, fontSize:11, fontWeight:700, cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>Back to current →</button>}
+          </div>
+          <button type="button" onClick={() => shiftMonth(1)} disabled={isCurrent} style={{ background:isCurrent?"rgba(255,255,255,.04)":"rgba(255,255,255,.1)", border:"none", borderRadius:10, width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", cursor:isCurrent?"default":"pointer", color:isCurrent?"rgba(255,255,255,.2)":C.white, fontFamily:"'DM Sans',sans-serif" }}>→</button>
         </div>
-        <button type="button" onClick={() => shiftMonth(1)} disabled={isCurrent} style={{ ...BTN_BASE, padding:"8px 12px", background:isCurrent?C.a50:C.a100, color:isCurrent?C.g300:C.b800, border:`1.5px solid ${C.a200}`, cursor:isCurrent?"default":"pointer" }}>
-          →
-        </button>
-      </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:16 }}>
-        <StatCard label="Students" value={active.length} sub={`${students.filter(s=>!s.active).length} inactive`} icon="users" color={C.a600}/>
-        <StatCard label="Revenue" value={fmt$(revenue)} sub={`${pct}% of ${fmt$(expected)}`} icon="dollar" color={C.b700}/>
-        <StatCard label="Paid" value={paidIds.size} sub={isCurrent?"this month":monthLabel.split(" ")[0]} icon="check" color="#059669"/>
-        <StatCard label="Pending" value={unpaid.length} sub="need payment" icon="bell" color="#dc2626"/>
-      </div>
-
-      {/* Progress bar */}
-      <div style={{ ...CARD, marginBottom:14 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:8 }}>
-          <span style={{ fontSize:13, fontWeight:700, color:C.b800 }}>Monthly Collection</span>
-          <span style={{ fontSize:13, fontWeight:700, color:C.a700 }}>{pct}%</span>
+        <div style={{ textAlign:"center", marginBottom:18 }}>
+          <p style={{ fontSize:11, textTransform:"uppercase", letterSpacing:".1em", opacity:.5, marginBottom:4 }}>Revenue</p>
+          <h1 style={{ fontFamily:"'DM Serif Display',serif", fontSize:42, fontWeight:700, lineHeight:1, margin:0 }}>{fmt$(revenue)}</h1>
         </div>
-        <div style={{ height:10, background:C.a100, borderRadius:10, overflow:"hidden" }}>
-          <div style={{ height:"100%", width:`${pct}%`, background:`linear-gradient(90deg,${C.a400},${C.b700})`, borderRadius:10, transition:"width .6s ease" }}/>
-        </div>
-        <p style={{ fontSize:12, color:C.g500, marginTop:5 }}>{fmt$(revenue)} of {fmt$(expected)} expected</p>
-      </div>
 
-      {/* Monthly collection history */}
-      <div style={{ ...CARD, marginBottom:14 }}>
-        <p style={{ fontSize:13, fontWeight:700, color:C.b800, marginBottom:14 }}>Collection History</p>
-        <div style={{ display:"flex", gap:6, alignItems:"flex-end", height:80 }}>
-          {[...monthHistory].reverse().map(m => (
-            <button type="button" key={m.key} onClick={() => setSelMonth(m.key)} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", fontFamily:"'Lato',sans-serif", padding:0 }}>
-              <span style={{ fontSize:10, fontWeight:700, color:m.key===selMonth?C.b800:C.g500 }}>{fmt$(m.revenue).replace(".00","")}</span>
-              <div style={{ width:"100%", borderRadius:6, background:m.key===selMonth?`linear-gradient(180deg,${C.a400},${C.b700})`:C.a200, height:Math.max(4, (m.revenue/maxRev)*50), transition:"height .3s" }}/>
-              <span style={{ fontSize:9, color:m.key===selMonth?C.b800:C.g500, fontWeight:m.key===selMonth?700:400 }}>{m.label}</span>
-            </button>
+        <div style={{ marginBottom:18 }}>
+          <div style={{ height:6, background:"rgba(255,255,255,.12)", borderRadius:6, overflow:"hidden" }}>
+            <div style={{ height:"100%", width:`${pct}%`, background:`linear-gradient(90deg,${C.a400},${C.a200})`, borderRadius:6, transition:"width .6s ease" }}/>
+          </div>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:6 }}>
+            <span style={{ fontSize:11, opacity:.4 }}>{pct}% collected</span>
+            <span style={{ fontSize:11, opacity:.4 }}>of {fmt$(expected)}</span>
+          </div>
+        </div>
+
+        <div style={{ display:"flex", gap:8 }}>
+          {[
+            { val:active.length, label:"Students" },
+            { val:paidIds.size, label:"Paid" },
+            { val:unpaid.length, label:"Pending" },
+          ].map((s,i) => (
+            <div key={i} style={{ flex:1, background:"rgba(255,255,255,.07)", borderRadius:14, padding:"12px 14px", textAlign:"center" }}>
+              <p style={{ fontSize:22, fontWeight:700, lineHeight:1, fontFamily:"'DM Serif Display',serif" }}>{s.val}</p>
+              <p style={{ fontSize:10, opacity:.45, marginTop:3, textTransform:"uppercase", letterSpacing:".06em" }}>{s.label}</p>
+            </div>
           ))}
         </div>
       </div>
 
       {/* Quick actions */}
-      <div style={{ ...CARD, marginBottom:14 }}>
-        <p style={{ fontSize:13, fontWeight:700, color:C.b800, marginBottom:12 }}>Quick Actions</p>
-        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-          <Btn sm onClick={addPayment}><Icon name="plus" size={13}/>Record Payment</Btn>
-          <Btn variant="secondary" sm onClick={addStudent}><Icon name="plus" size={13}/>Add Student</Btn>
-          <Btn variant="secondary" sm onClick={()=>setPage("messages")}><Icon name="zap" size={13}/>Scan Zelle</Btn>
+      <div style={{ display:"flex", gap:8, marginBottom:18, flexWrap:"wrap" }}>
+        <Btn sm onClick={addPayment}><Icon name="plus" size={13}/>Record Payment</Btn>
+        <Btn variant="secondary" sm onClick={addStudent}><Icon name="plus" size={13}/>Add Student</Btn>
+        <Btn variant="secondary" sm onClick={()=>setPage("messages")}><Icon name="msg" size={13}/>Zelle Queue</Btn>
+      </div>
+
+      {/* Collection history */}
+      <div style={{ ...CARD, marginBottom:16 }}>
+        <p style={{ fontSize:14, fontWeight:700, color:C.b800, marginBottom:16 }}>Collection History</p>
+        <div style={{ display:"flex", gap:4, alignItems:"flex-end", height:80 }}>
+          {[...monthHistory].reverse().map(m => {
+            const isActive = m.key===selMonth;
+            return (
+              <button type="button" key={m.key} onClick={() => setSelMonth(m.key)} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, background:"none", border:"none", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", padding:0 }}>
+                <span style={{ fontSize:9, fontWeight:700, color:isActive?C.b800:C.g300 }}>{fmt$(m.revenue).replace(".00","")}</span>
+                <div style={{ width:"100%", borderRadius:8, background:isActive?`linear-gradient(180deg,${C.a400},${C.b700})`:C.a100, height:Math.max(4, (m.revenue/maxRev)*50), transition:"height .3s" }}/>
+                <span style={{ fontSize:9, color:isActive?C.b800:C.g300, fontWeight:isActive?700:400 }}>{m.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -1025,19 +1030,19 @@ const Dashboard = ({ students, payments, setPage, addPayment, addStudent }) => {
         const severeColor = m => m >= 4 ? "#dc2626" : m >= 3 ? "#ea580c" : "#d97706";
         const severeBg   = m => m >= 4 ? "#fef2f2" : m >= 3 ? "#fff7ed" : "#fffbeb";
         return (
-          <div style={{ ...CARD, marginBottom:14, borderLeft:`4px solid #dc2626` }}>
-            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
-              <Icon name="warn" color="#dc2626" size={16}/>
-              <p style={{ fontWeight:700, color:C.b800, fontSize:14 }}>Overdue ({overdue.length})</p>
+          <div style={{ ...CARD, marginBottom:16 }}>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:8, height:8, borderRadius:4, background:"#dc2626" }}/>
+                <p style={{ fontWeight:700, color:C.b800, fontSize:14 }}>Overdue ({overdue.length})</p>
+              </div>
+              <span style={{ fontSize:12, fontWeight:700, color:"#dc2626" }}>{fmt$(overdue.reduce((t,s)=>t+s.fee*s.missed,0))}</span>
             </div>
-            <p style={{ fontSize:12, color:C.g500, marginBottom:12 }}>Students with 2+ consecutive months unpaid</p>
-            <div style={{ maxHeight:300, overflowY:"auto", marginRight:-4, paddingRight:4 }}>
+            <div style={{ maxHeight:260, overflowY:"auto" }}>
               {overdue.map(s => (
                 <div key={s.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${C.a100}` }}>
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <div style={{ width:30, height:30, borderRadius:10, background:severeColor(s.missed), display:"flex", alignItems:"center", justifyContent:"center", color:C.white, fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:13, flexShrink:0 }}>
-                      {s.missed}
-                    </div>
+                    <Avatar name={s.name} size={34}/>
                     <div>
                       <p style={{ fontWeight:700, fontSize:13, color:C.b800 }}>{s.name}</p>
                       <p style={{ fontSize:11, color:C.g500 }}>{s.parentName} · {fmt$(s.fee)}/mo</p>
@@ -1049,48 +1054,41 @@ const Dashboard = ({ students, payments, setPage, addPayment, addStudent }) => {
                 </div>
               ))}
             </div>
-            <p style={{ fontSize:12, color:C.g500, marginTop:10, fontWeight:700 }}>
-              Total overdue: {fmt$(overdue.reduce((t,s)=>t+s.fee*s.missed,0))}
-            </p>
           </div>
         );
       })()}
 
       {/* Unpaid for selected month */}
       {unpaid.length > 0 && (
-        <div style={{ ...CARD, borderLeft:`4px solid ${C.a500}`, marginBottom:14 }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+        <div style={{ ...CARD, marginBottom:16 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <Icon name="warn" color={C.a600} size={16}/>
+              <div style={{ width:8, height:8, borderRadius:4, background:C.a500 }}/>
               <p style={{ fontWeight:700, color:C.b800, fontSize:14 }}>Unpaid — {monthLabel.split(" ")[0]} ({unpaid.length})</p>
             </div>
-            <span style={{ fontSize:11, fontWeight:700, color:C.a700 }}>
-              {fmt$(unpaid.reduce((t,s)=>t+s.fee,0))} outstanding
-            </span>
+            <span style={{ fontSize:12, fontWeight:700, color:C.a600 }}>{fmt$(unpaid.reduce((t,s)=>t+s.fee,0))}</span>
           </div>
-          <div style={{ maxHeight:300, overflowY:"auto", marginRight:-4, paddingRight:4 }}>
-            {unpaid.map((s, i) => (
-              <div key={s.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:`1px solid ${C.a100}` }}>
+          <div style={{ maxHeight:260, overflowY:"auto" }}>
+            {unpaid.map(s => (
+              <div key={s.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${C.a100}` }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                  <div style={{ width:30, height:30, borderRadius:10, background:`linear-gradient(135deg,${C.a400},${C.b700})`, display:"flex", alignItems:"center", justifyContent:"center", color:C.white, fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:13, flexShrink:0 }}>
-                    {s.name[0]}
-                  </div>
+                  <Avatar name={s.name} size={34}/>
                   <div>
-                    <p style={{ fontWeight:700, fontSize:13 }}>{s.name}</p>
+                    <p style={{ fontWeight:700, fontSize:13, color:C.b800 }}>{s.name}</p>
                     <p style={{ fontSize:11, color:C.g500 }}>{s.parentName}</p>
                   </div>
                 </div>
-                <span style={{ fontWeight:700, color:C.a700, fontSize:14, flexShrink:0 }}>{fmt$(s.fee)}</span>
+                <span style={{ fontWeight:700, color:C.a600, fontSize:14 }}>{fmt$(s.fee)}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Payments for selected month */}
+      {/* Recent payments */}
       <div style={{ ...CARD }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <p style={{ fontWeight:700, color:C.b800 }}>{isCurrent ? "Recent Payments" : `${monthLabel.split(" ")[0]} Payments`}</p>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
+          <p style={{ fontWeight:700, color:C.b800, fontSize:14 }}>{isCurrent ? "Recent Payments" : `${monthLabel.split(" ")[0]} Payments`}</p>
           <Btn variant="ghost" sm onClick={()=>setPage("payments")}>View all →</Btn>
         </div>
         {recentForMonth.length === 0
@@ -1098,9 +1096,9 @@ const Dashboard = ({ students, payments, setPage, addPayment, addStudent }) => {
           : recentForMonth.map(p => {
               const s = students.find(x=>x.id===p.sid);
               return (
-                <div key={p.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"9px 0", borderBottom:`1px solid ${C.a100}` }}>
+                <div key={p.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 0", borderBottom:`1px solid ${C.a100}` }}>
                   <div style={{ display:"flex", gap:10, alignItems:"center" }}>
-                    <Avatar name={s?.name||"?"} size={36}/>
+                    <Avatar name={s?.name||"?"} size={34}/>
                     <div>
                       <p style={{ fontWeight:700, fontSize:13 }}>{s?.name||"Unknown"}</p>
                       <p style={{ fontSize:11, color:C.g500 }}>{fmtD(p.date)} · {p.method}</p>
@@ -1131,7 +1129,7 @@ const StudentsPage = ({ students, payments, onAdd, onEdit, onDelete, onInvoice }
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-        <h1 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:24 }}>Students</h1>
+        <h1 style={{ fontFamily:"'DM Serif Display',serif", color:C.b900, fontSize:24 }}>Students</h1>
         <Btn sm onClick={onAdd}><Icon name="plus" size={14}/>Add Student</Btn>
       </div>
 
@@ -1151,29 +1149,27 @@ const StudentsPage = ({ students, payments, onAdd, onEdit, onDelete, onInvoice }
         ))}
       </div>
 
-      <div style={{ display:"grid", gap:12 }}>
+      <div style={{ display:"grid", gap:10 }}>
         {list.map(s => {
           const paid = paidForMonth(payments,s.id,thisMonth());
           return (
             <div key={s.id} style={{ ...CARD }}>
-              <div style={{ display:"flex", gap:12, alignItems:"flex-start", marginBottom:12 }}>
-                <Avatar name={s.name} size={48}/>
+              <div style={{ display:"flex", gap:12, alignItems:"center", marginBottom:14 }}>
+                <Avatar name={s.name} size={44}/>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
-                    <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:16, color:C.b800 }}>{s.name}</h3>
-                    <p style={{ fontWeight:700, color:C.a700, fontSize:16, flexShrink:0 }}>{fmt$(s.fee)}<span style={{ fontSize:11, color:C.g500 }}>/mo</span></p>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
+                    <h3 style={{ fontFamily:"'DM Serif Display',serif", fontSize:16, color:C.b800 }}>{s.name}</h3>
+                    <p style={{ fontWeight:700, color:C.b700, fontSize:16, flexShrink:0 }}>{fmt$(s.fee)}<span style={{ fontSize:11, color:C.g500, fontWeight:400 }}>/mo</span></p>
                   </div>
-                  <p style={{ fontSize:13, color:C.g500, marginTop:1 }}>{s.parentName}</p>
-                  {s.email && <p style={{ fontSize:12, color:C.g500 }}>{s.email}</p>}
-                  <div style={{ display:"flex", gap:6, marginTop:8, flexWrap:"wrap" }}>
-                    <Badge status={s.active?"active":"inactive"}/>
-                    <span style={{ display:"inline-flex", alignItems:"center", padding:"2px 9px", borderRadius:20, fontSize:11, fontWeight:700, background:paid?"#d1fae5":"#fef3c7", color:paid?"#065f46":"#92400e" }}>
-                      {paid ? "Paid ✓" : "Unpaid"}
-                    </span>
-                  </div>
+                  <p style={{ fontSize:13, color:C.g500, marginTop:2 }}>{s.parentName}</p>
                 </div>
               </div>
-              <div style={{ height:1, background:C.a100, marginBottom:12 }}/>
+              <div style={{ display:"flex", gap:6, marginBottom:14, flexWrap:"wrap" }}>
+                <Badge status={s.active?"active":"inactive"}/>
+                <span style={{ display:"inline-flex", alignItems:"center", padding:"2px 9px", borderRadius:20, fontSize:11, fontWeight:700, background:paid?"#d1fae5":"#fef3c7", color:paid?"#065f46":"#92400e" }}>
+                  {paid ? "Paid" : "Unpaid"}
+                </span>
+              </div>
               <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                 {s.email && <Btn variant="ghost" sm href={`mailto:${s.email}`}><Icon name="mail" size={13}/>Email</Btn>}
                 {s.phone && <Btn variant="ghost" sm href={`tel:${s.phone}`}><Icon name="phone" size={13}/>Call</Btn>}
@@ -1186,8 +1182,7 @@ const StudentsPage = ({ students, payments, onAdd, onEdit, onDelete, onInvoice }
         })}
         {list.length === 0 && (
           <div style={{ textAlign:"center", padding:48, color:C.g500 }}>
-            <p style={{ fontSize:36, marginBottom:8 }}>🔍</p>
-            <p>No students found</p>
+            <p style={{ fontSize:13 }}>No students found</p>
           </div>
         )}
       </div>
@@ -1208,7 +1203,7 @@ const PaymentsPage = ({ payments, students, onAdd, onEdit, onDelete }) => {
   return (
     <div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-        <h1 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:24 }}>Payments</h1>
+        <h1 style={{ fontFamily:"'DM Serif Display',serif", color:C.b900, fontSize:24 }}>Payments</h1>
         <Btn sm onClick={onAdd}><Icon name="plus" size={14}/>Record</Btn>
       </div>
 
@@ -1229,7 +1224,7 @@ const PaymentsPage = ({ payments, students, onAdd, onEdit, onDelete }) => {
       {/* Summary card */}
       <div style={{ ...CARD, marginBottom:14, background:`linear-gradient(135deg,${C.b800},${C.a600})`, color:C.white, padding:"18px 22px" }}>
         <p style={{ fontSize:11, opacity:.65, textTransform:"uppercase", letterSpacing:".08em" }}>Total Collected</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, marginTop:3 }}>{fmt$(total)}</h2>
+        <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:32, marginTop:3 }}>{fmt$(total)}</h2>
         <p style={{ fontSize:12, opacity:.65, marginTop:3 }}>{filtered.filter(p=>p.status==="paid").length} payments · {month||"all time"}</p>
       </div>
 
@@ -1277,7 +1272,7 @@ const InvoicesPage = ({ students, payments, onInvoice }) => {
   const active = students.filter(s=>s.active);
   return (
     <div>
-      <h1 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Invoices</h1>
+      <h1 style={{ fontFamily:"'DM Serif Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Invoices</h1>
       <p style={{ color:C.g500, fontSize:13, marginBottom:18 }}>Tap any student to view their full invoice</p>
       <div style={{ display:"grid", gap:12 }}>
         {active.map(s => {
@@ -1287,13 +1282,13 @@ const InvoicesPage = ({ students, payments, onInvoice }) => {
           const last = allPaid.sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
           return (
             <button key={s.id} type="button" onClick={()=>onInvoice(s)} style={{ ...CARD, cursor:"pointer", textAlign:"left", width:"100%", display:"block", transition:"transform .18s, box-shadow .18s" }}
-              onMouseEnter={e=>{ e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 8px 32px rgba(120,53,15,.18)"; }}
+              onMouseEnter={e=>{ e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="0 8px 32px rgba(74,14,26,.18)"; }}
               onMouseLeave={e=>{ e.currentTarget.style.transform=""; e.currentTarget.style.boxShadow=""; }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                 <div style={{ display:"flex", gap:12, alignItems:"center" }}>
                   <Avatar name={s.name} size={46}/>
                   <div>
-                    <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:15, color:C.b800 }}>{s.name}</h3>
+                    <h3 style={{ fontFamily:"'DM Serif Display',serif", fontSize:15, color:C.b800 }}>{s.name}</h3>
                     <p style={{ fontSize:12, color:C.g500 }}>{s.parentName}</p>
                     <p style={{ fontSize:11, color:C.g500, marginTop:2 }}>
                       {allPaid.length} payments · {fmt$(totalPaid)} total
@@ -1318,17 +1313,16 @@ const InvoicesPage = ({ students, payments, onInvoice }) => {
 };
 
 // ── Zelle Page ────────────────────────────────────────────────────────────────
-const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onScanPaste }) => {
+const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss }) => {
   const cm = thisMonth();
-  const [showPaste, setShowPaste] = useState(false);
-  const [pasteText, setPasteText] = useState("");
   const pending = zelleQueue.filter(q => q.status === "auto" || q.status === "review" || q.status === "unmatched");
   const autoItems = pending.filter(q => q.status === "auto");
   const reviewItems = pending.filter(q => q.status === "review");
   const unmatchedItems = pending.filter(q => q.status === "unmatched");
   const recentDone = zelleQueue.filter(q => q.status === "approved" || q.status === "dismissed").sort((a,b) => (b.resolvedAt||"").localeCompare(a.resolvedAt||"")).slice(0, 10);
 
-  // Months each pending item will be applied to — defaults until the user taps a chip
+  const lastScanned = zelleQueue.reduce((latest, q) => q.scannedAt && q.scannedAt > latest ? q.scannedAt : latest, "");
+
   const [monthSel, setMonthSel] = useState({});
   const suggestedCount = (q) => {
     const stu = q.sid ? students.find(s=>s.id===q.sid) : null;
@@ -1364,15 +1358,6 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
     );
   };
 
-  const handlePasteScan = () => {
-    if (!pasteText.trim()) return;
-    const parsed = parseZelleMessages(pasteText);
-    if (parsed.length === 0) { alert("No Zelle payments found in the pasted text. Look for messages like: 'Chase | Zelle(R): NAME sent you $AMOUNT'"); return; }
-    onScanPaste(parsed);
-    setPasteText("");
-    setShowPaste(false);
-  };
-
   const QueueCard = ({ item, borderColor, children }) => {
     const stu = item.sid ? students.find(s=>s.id===item.sid) : null;
     return (
@@ -1400,51 +1385,32 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
 
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:20 }}>
-        <div>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Zelle Scanner</h1>
-          <p style={{ color:C.g500, fontSize:13 }}>Auto-detect Zelle payments from your iMessages</p>
+      <div style={{ marginBottom:20 }}>
+        <h1 style={{ fontFamily:"'DM Serif Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Zelle Payments</h1>
+        <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 12px", borderRadius:20, background:C.a50, border:`1px solid ${C.a200}` }}>
+            <Icon name="mail" size={13} color={C.a600}/>
+            <span style={{ fontSize:12, color:C.g500 }}>Scanned daily from email</span>
+          </div>
+          {lastScanned && (
+            <span style={{ fontSize:11, color:C.g500 }}>Last scan: {fmtD(lastScanned)}</span>
+          )}
+          {pending.length > 0 && (
+            <span style={{ fontSize:12, fontWeight:700, padding:"4px 12px", borderRadius:20, background:C.b700, color:C.white }}>{pending.length} pending</span>
+          )}
         </div>
-        <button type="button" onClick={() => setShowPaste(true)}
-          style={{ ...BTN_BASE, padding:"10px 18px", fontSize:13, background:C.a500, color:C.white, border:"none", borderRadius:12, fontWeight:700, gap:6, flexShrink:0 }}>
-          <Icon name="zap" size={15} color={C.white}/> Scan
-        </button>
       </div>
 
-      {showPaste && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={e => { if(e.target===e.currentTarget) setShowPaste(false); }}>
-          <div style={{ background:C.cream, borderRadius:20, padding:24, width:"100%", maxWidth:500, maxHeight:"80vh", overflow:"auto" }}>
-            <h2 style={{ fontFamily:"'Playfair Display',serif", color:C.b900, fontSize:20, marginBottom:12 }}>Paste Zelle Messages</h2>
-            <p style={{ fontSize:13, color:C.g500, marginBottom:4, lineHeight:1.5 }}>
-              Open <strong>Messages</strong> on your Mac, select the conversation from <strong>24273</strong> (Chase/Zelle), select all messages (<strong>Cmd+A</strong>), copy (<strong>Cmd+C</strong>), and paste below.
-            </p>
-            <p style={{ fontSize:12, color:C.g500, marginBottom:14, lineHeight:1.4 }}>
-              The scanner looks for: "Zelle(R): NAME sent you $AMOUNT"
-            </p>
-            <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} placeholder={"Paste your Zelle messages here...\n\ne.g. Chase | Zelle(R): ARUN RAJA sent you $150.00 & it's ready now."}
-              style={{ width:"100%", minHeight:160, padding:14, borderRadius:12, border:`1.5px solid ${C.a200}`, fontFamily:"'Lato',sans-serif", fontSize:13, resize:"vertical", background:C.white, boxSizing:"border-box" }}/>
-            <div style={{ display:"flex", gap:10, marginTop:14, justifyContent:"flex-end" }}>
-              <button type="button" onClick={() => { setShowPaste(false); setPasteText(""); }}
-                style={{ ...BTN_BASE, padding:"10px 20px", fontSize:13, background:C.a50, color:C.g500, border:`1px solid ${C.a200}`, borderRadius:10 }}>Cancel</button>
-              <button type="button" onClick={handlePasteScan}
-                style={{ ...BTN_BASE, padding:"10px 20px", fontSize:13, background:C.a500, color:C.white, border:"none", borderRadius:10, fontWeight:700 }}>
-                <Icon name="zap" size={14} color={C.white}/> Process Messages
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {pending.length === 0 && !showPaste && (
+      {pending.length === 0 && (
         <div style={{ ...CARD, marginBottom:16, background:C.a50, border:`1.5px solid ${C.a200}` }}>
           <div style={{ display:"flex", gap:14 }}>
-            <div style={{ width:44, height:44, borderRadius:14, background:C.a500, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-              <Icon name="zap" size={22} color={C.white}/>
+            <div style={{ width:44, height:44, borderRadius:14, background:`linear-gradient(135deg,${C.a400},${C.a600})`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <Icon name="check" size={22} color={C.white}/>
             </div>
             <div>
-              <p style={{ fontWeight:700, color:C.b800, marginBottom:5 }}>No Pending Payments</p>
+              <p style={{ fontWeight:700, color:C.b800, marginBottom:5 }}>All Caught Up</p>
               <p style={{ fontSize:13, color:C.g500, lineHeight:1.6 }}>
-                Tap <strong>Scan</strong> to paste your Chase Zelle messages. Matched payments will appear here for review.
+                No pending payments to review. Zelle receipts from your email are checked daily and will appear here automatically.
               </p>
             </div>
           </div>
@@ -1535,7 +1501,7 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, onSca
       {/* Parent roster */}
       <div>
         <p style={{ fontWeight:700, color:C.b800, marginBottom:8, fontSize:15 }}>Parent Roster</p>
-        <p style={{ fontSize:12, color:C.g500, marginBottom:12 }}>The scanner matches these names against Zelle senders:</p>
+        <p style={{ fontSize:12, color:C.g500, marginBottom:12 }}>These names are matched against Zelle senders from your email:</p>
         <div style={{ display:"grid", gap:8 }}>
           {students.filter(s=>s.active).sort((a,b)=>a.parentName.localeCompare(b.parentName)).map(s => {
             const paid = paidForMonth(payments,s.id,cm);
@@ -1741,65 +1707,66 @@ export default function App() {
       case "students":  return <StudentsPage students={students} payments={payments} onAdd={()=>setStuModal("add")} onEdit={s=>setStuModal(s)} onDelete={deleteStu} onInvoice={s=>setInvModal(s)}/>;
       case "payments":  return <PaymentsPage payments={payments} students={students} onAdd={()=>setPayModal("add")} onEdit={p=>setPayModal(p)} onDelete={deletePay}/>;
       case "invoices":  return <InvoicesPage students={students} payments={payments} onInvoice={s=>setInvModal(s)}/>;
-      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle} onScanPaste={addToZelleQueue}/>;
+      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle}/>;
     }
   };
 
   if (!ready) return (
-    <div style={{ height:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16, background:C.cream, fontFamily:"'Lato',sans-serif" }}>
-      <div style={{ width:54, height:54, borderRadius:18, background:`linear-gradient(135deg,${C.a500},${C.b800})`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <Icon name="home" size={26} color={C.white}/>
+    <div style={{ height:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, background:C.cream, fontFamily:"'DM Sans',sans-serif" }}>
+      <div style={{ width:64, height:64, borderRadius:20, background:`linear-gradient(135deg,${C.b800},${C.b900})`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <span style={{ color:C.a400, fontSize:28, fontFamily:"'DM Serif Display',serif", fontWeight:700 }}>A</span>
       </div>
-      <h2 style={{ fontFamily:"'Playfair Display',serif", color:C.b800 }}>DanceApp</h2>
-      <p style={{ color:C.g500, fontSize:14 }}>Loading your data…</p>
+      <h2 style={{ fontFamily:"'DM Serif Display',serif", color:C.b800, fontSize:20, marginTop:4 }}>Arohana</h2>
+      <p style={{ color:C.g300, fontSize:13 }}>Loading...</p>
     </div>
   );
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: ${C.cream}; font-family: 'Lato', sans-serif; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: ${C.a100}; }
-        ::-webkit-scrollbar-thumb { background: ${C.a400}; border-radius: 3px; }
+        html { scroll-behavior: smooth; }
+        body { background: ${C.cream}; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: ${C.g300}; border-radius: 4px; }
         @keyframes _da_spin { to { transform: rotate(360deg); } }
         a { text-decoration: none; }
-        button { font-family: 'Lato', sans-serif; }
+        button { font-family: 'DM Sans', sans-serif; }
       `}</style>
 
       <div style={{ display:"flex", minHeight:"100vh", background:C.cream }}>
 
         {/* ── Desktop Sidebar ── */}
         {wide && (
-          <aside style={{ width:240, background:C.white, borderRight:`1px solid ${C.a100}`, position:"fixed", top:0, left:0, bottom:0, display:"flex", flexDirection:"column", zIndex:100, boxShadow:"2px 0 16px rgba(120,53,15,.07)" }}>
+          <aside style={{ width:240, background:`linear-gradient(180deg,${C.b800},${C.b900})`, borderRight:"1px solid rgba(212,175,55,.08)", position:"fixed", top:0, left:0, bottom:0, display:"flex", flexDirection:"column", zIndex:100, boxShadow:"2px 0 20px rgba(48,10,18,.25)" }}>
             <div style={{ padding:"26px 20px 20px" }}>
               <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-                <div style={{ width:40, height:40, borderRadius:14, background:`linear-gradient(135deg,${C.a500},${C.b800})`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <div style={{ width:40, height:40, borderRadius:14, background:`linear-gradient(135deg,${C.a400},${C.a600})`, display:"flex", alignItems:"center", justifyContent:"center" }}>
                   <Icon name="home" size={20} color={C.white}/>
                 </div>
                 <div>
-                  <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:20, color:C.b900, lineHeight:1 }}>DanceApp</h2>
-                  <p style={{ fontSize:11, color:C.g500, marginTop:2 }}>Fee Manager</p>
+                  <h2 style={{ fontFamily:"'DM Serif Display',serif", fontSize:20, color:C.a400, lineHeight:1 }}>Arohana</h2>
+                  <p style={{ fontSize:11, color:"rgba(212,175,55,.5)", marginTop:2 }}>Fee Manager</p>
                 </div>
               </div>
             </div>
-            <div style={{ height:1, background:C.a100, margin:"0 16px" }}/>
+            <div style={{ height:1, background:"rgba(212,175,55,.12)", margin:"0 16px" }}/>
             <nav style={{ padding:"12px 10px", flex:1 }}>
               {NAV.map(item => {
                 const active = page === item.id;
                 return (
-                  <button type="button" key={item.id} onClick={() => setPage(item.id)} style={{ width:"100%", display:"flex", alignItems:"center", gap:12, padding:"11px 14px", borderRadius:12, border:"none", cursor:"pointer", background:active?`linear-gradient(135deg,${C.a600},${C.b700})`:"transparent", color:active?C.white:C.g500, fontFamily:"'Lato',sans-serif", fontWeight:700, fontSize:14, marginBottom:4, transition:"background .18s, color .18s", textAlign:"left" }}>
-                    <Icon name={item.icon} size={17} color={active?C.white:C.g500}/>{item.label}
+                  <button type="button" key={item.id} onClick={() => setPage(item.id)} style={{ width:"100%", display:"flex", alignItems:"center", gap:12, padding:"11px 14px", borderRadius:12, border:"none", cursor:"pointer", background:active?`linear-gradient(135deg,${C.a400},${C.a600})`:"transparent", color:active?C.white:C.a200, fontFamily:"'DM Sans',sans-serif", fontWeight:700, fontSize:14, marginBottom:4, transition:"background .18s, color .18s, transform .15s", textAlign:"left" }}>
+                    <Icon name={item.icon} size={17} color={active?C.white:C.a200}/>{item.label}
                   </button>
                 );
               })}
             </nav>
-            <div style={{ padding:"14px 20px", borderTop:`1px solid ${C.a100}` }}>
+            <div style={{ padding:"14px 20px", borderTop:"1px solid rgba(212,175,55,.12)" }}>
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                 <div style={{ width:8, height:8, borderRadius:4, background:syncStatus==="synced"?"#10b981":syncStatus==="loading"?"#f59e0b":"#ef4444" }}/>
-                <p style={{ fontSize:11, color:C.g500, fontWeight:700 }}>
+                <p style={{ fontSize:11, color:"rgba(212,175,55,.5)", fontWeight:700 }}>
                   {syncStatus==="synced"?"Cloud synced":syncStatus==="loading"?"Syncing...":"Offline mode"}
                 </p>
               </div>
@@ -1811,41 +1778,27 @@ export default function App() {
         <div style={{ flex:1, marginLeft:wide?240:0, display:"flex", flexDirection:"column" }}>
           {/* Mobile header */}
           {!wide && (
-            <header style={{ position:"sticky", top:0, zIndex:50, background:"rgba(253,248,240,.96)", backdropFilter:"blur(12px)", borderBottom:`1px solid ${C.a100}`, padding:"13px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <div style={{ width:32, height:32, borderRadius:10, background:`linear-gradient(135deg,${C.a500},${C.b800})`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  <Icon name="home" size={16} color={C.white}/>
-                </div>
-                <span style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:600, color:C.b900 }}>DanceApp</span>
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:4, padding:"5px 10px", borderRadius:8, background:syncStatus==="synced"?"#ecfdf5":syncStatus==="loading"?"#fffbeb":"#fef2f2" }}>
-                  <div style={{ width:6, height:6, borderRadius:3, background:syncStatus==="synced"?"#10b981":syncStatus==="loading"?"#f59e0b":"#ef4444" }}/>
-                  <span style={{ fontSize:10, fontWeight:700, color:syncStatus==="synced"?"#059669":syncStatus==="loading"?"#d97706":"#dc2626" }}>
-                    {syncStatus==="synced"?"Synced":syncStatus==="loading"?"Syncing...":"Offline"}
-                  </span>
-                </div>
-              </div>
+            <header style={{ padding:"16px 18px 8px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <span style={{ fontFamily:"'DM Serif Display',serif", fontSize:22, fontWeight:700, color:C.b900 }}>Arohana</span>
+              <div style={{ width:8, height:8, borderRadius:4, background:syncStatus==="synced"?"#10b981":syncStatus==="loading"?"#f59e0b":"#ef4444" }}/>
             </header>
           )}
 
           {/* Page content */}
-          <main style={{ padding:wide?"30px 36px":"18px 16px", paddingBottom:wide?40:96, flex:1 }}>
+          <main style={{ padding:wide?"30px 36px":"18px 16px", paddingBottom:wide?40:110, flex:1 }}>
             {renderPage()}
           </main>
         </div>
 
         {/* ── Mobile bottom nav ── */}
         {!wide && (
-          <nav style={{ position:"fixed", bottom:0, left:0, right:0, background:C.white, borderTop:`1px solid ${C.a100}`, boxShadow:"0 -4px 20px rgba(120,53,15,.09)", display:"flex", zIndex:100 }}>
+          <nav style={{ position:"fixed", bottom:14, left:14, right:14, background:C.white, borderRadius:22, boxShadow:"0 2px 24px rgba(0,0,0,.1)", display:"flex", padding:4, zIndex:100 }}>
             {NAV.map(item => {
               const active = page === item.id;
               return (
-                <button type="button" key={item.id} onClick={() => setPage(item.id)} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"9px 4px 8px", border:"none", cursor:"pointer", background:"transparent", color:active?C.a600:C.g500, transition:"color .18s", fontFamily:"'Lato',sans-serif" }}>
-                  <div style={{ width:32, height:32, borderRadius:10, display:"flex", alignItems:"center", justifyContent:"center", background:active?`linear-gradient(135deg,${C.a500},${C.b700})`:"transparent", transition:"background .18s", marginBottom:2 }}>
-                    <Icon name={item.icon} size={17} color={active?C.white:C.g500}/>
-                  </div>
-                  <span style={{ fontSize:10, fontWeight:700 }}>{item.label}</span>
+                <button type="button" key={item.id} onClick={() => setPage(item.id)} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"10px 4px 8px", border:"none", cursor:"pointer", background:active?C.b800:"transparent", borderRadius:18, color:active?C.white:C.g500, transition:"all .25s ease", fontFamily:"'DM Sans',sans-serif" }}>
+                  <Icon name={item.icon} size={18} color={active?C.white:C.g500}/>
+                  <span style={{ fontSize:9, fontWeight:700, marginTop:3, letterSpacing:".02em" }}>{item.label}</span>
                 </button>
               );
             })}
@@ -1854,12 +1807,12 @@ export default function App() {
 
         {/* ── Quick Pay FAB ── */}
         <button type="button" onClick={() => setQuickPay(true)}
-          style={{ position:"fixed", bottom:wide?28:78, right:wide?28:18, width:56, height:56, borderRadius:28, background:`linear-gradient(135deg,${C.a500},${C.b700})`, color:C.white, border:"none", boxShadow:"0 4px 20px rgba(180,83,9,.4)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", zIndex:90, transition:"transform .15s" }}
+          style={{ position:"fixed", bottom:wide?28:90, right:wide?28:18, width:52, height:52, borderRadius:16, background:`linear-gradient(135deg,${C.b700},${C.b900})`, color:C.white, border:"none", boxShadow:"0 4px 16px rgba(48,10,18,.3)", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", zIndex:90, transition:"transform .15s" }}
           onMouseDown={e => e.currentTarget.style.transform="scale(0.92)"}
           onMouseUp={e => e.currentTarget.style.transform=""}
           onTouchStart={e => e.currentTarget.style.transform="scale(0.92)"}
           onTouchEnd={e => e.currentTarget.style.transform=""}>
-          <Icon name="dollar" size={24} color={C.white}/>
+          <Icon name="dollar" size={22} color={C.white}/>
         </button>
 
         {/* ── Quick Pay Modal ── */}

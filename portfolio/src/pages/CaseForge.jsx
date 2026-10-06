@@ -115,7 +115,7 @@ export default function CaseForge() {
         <Tradeoff
           chose="Two hard human gates"
           over="A fully autonomous run from plan to deploy"
-          because="Autonomy demos well and ships badly. The plan gate catches wrong assumptions before they become 9,000 lines. The validation gate keeps a human accountable for what reaches production. Everything between the gates runs without interruption, which is where the speed comes from."
+          because="Autonomy demos well and ships badly. The plan gate catches wrong assumptions before they become thousands of lines of code. The validation gate keeps a human accountable for what reaches production. Everything between the gates runs without interruption, which is where the speed comes from."
         />
         <Tradeoff
           chose="Seven models behind a routing layer"
@@ -137,17 +137,19 @@ export default function CaseForge() {
       <Chapter id="results" title="Results">
         <Numbers
           items={[
-            ["72 min", "plan to pull requests"],
-            ["2", "production pull requests"],
-            ["9,000+", "lines across 81 files"],
-            ["~35", "background agents in one run"],
+            ["9", "phases, plan to document"],
+            ["2", "human gates per run"],
+            ["7", "models routed by task"],
+            ["Daily", "use across multiple repositories"],
           ]}
         />
         <p>
-          A single Forge run took a plan through to two reviewed pull requests totaling over 9,000 lines
-          across 81 files in 72 minutes, with about 35 background agents working in parallel. The same
-          pattern, applied as a six-agent research tree, produced a 607-line migration specification for
-          a legacy monolith that was then executed end to end through AI coding sessions.
+          Forge moved from a demo to the way the team ships. Since launch it has run every working day
+          across multiple repositories, taking plans through to reviewed, production pull requests with
+          dozens of background agents working in parallel on each run. The same pattern, applied as a
+          parallel research tree, produced the migration specification for a legacy monolith that was then
+          executed end to end through AI coding sessions. The throughput keeps climbing, which is why this
+          page describes the system rather than quoting a number that is stale by the next morning.
         </p>
         <Callout tone="accent">
           <p>

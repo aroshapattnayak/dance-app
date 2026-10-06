@@ -24,11 +24,11 @@ const cases = [
     role: "AI platform work at G2",
     problem:
       "Product specs were queuing behind engineering capacity, and three AI coding tools were used three different ways across the team.",
-    result: "A nine-phase agentic workflow with human gates. One run went from plan to two reviewed pull requests in 72 minutes.",
+    result: "A nine-phase agentic workflow with human gates that takes a plan to reviewed pull requests. In daily use across multiple repositories since launch.",
     stats: [
-      ["72 min", "plan to pull request"],
-      ["9,000+", "lines across 81 files"],
-      ["9", "phases, each with a gate"],
+      ["9", "phases from plan to document"],
+      ["2", "human gates, plan and validate"],
+      ["Daily", "use across multiple repositories"],
     ],
   },
 ];

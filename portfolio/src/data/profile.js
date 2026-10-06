@@ -43,7 +43,7 @@ export const principles = [
     title: "Build it yourself when that's the fastest way to learn.",
     body:
       "I write specs, then build with AI coding agents so I can feel the trade-offs instead of reading about them. Forge and the Narthana studio app both came out of that habit.",
-    proof: "One Forge run produced two production pull requests, 9,000 lines across 81 files, in 72 minutes.",
+    proof: "Forge now runs every working day across multiple repositories, taking plans through to reviewed pull requests with humans gating only the two decisions that matter.",
   },
 ];
 
@@ -69,9 +69,9 @@ export const aiWork = [
   },
   {
     name: "Forge, an agentic delivery workflow",
-    xyz: "Delivered 2 pull requests totaling 9,000+ lines across 81 files in a single 72-minute run by architecting a 9-phase agentic workflow, from plan through deploy, with specialized subagents and human gates.",
-    metric: "72 min",
-    metricLabel: "plan to pull request",
+    xyz: "Turned product plans into reviewed, production pull requests across multiple repositories, in daily use since launch, by architecting a 9-phase agentic workflow from plan through deploy with specialized subagents, persistent memory, and human gates.",
+    metric: "Plan to PR",
+    metricLabel: "in one gated workflow",
     link: "/work/forge",
   },
 ];

@@ -1,0 +1,39 @@
+.contact {
+  background: var(--ink);
+  color: white;
+  border-radius: var(--r-xl);
+  padding: clamp(32px, 6vw, 72px);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.contact__title {
+  max-width: 16ch;
+  font-size: var(--t-4xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.contact__lede {
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 52ch;
+}
+
+.contact__actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.contact .btn--ghost {
+  --btn-img: none;
+  --btn-bg: transparent;
+  --btn-fg: white;
+  --btn-edge: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.contact .btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+}

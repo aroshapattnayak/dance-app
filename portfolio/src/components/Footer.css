@@ -1,0 +1,25 @@
+.footer {
+  border-top: 1px solid var(--line);
+  padding-block: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.footer__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.footer__note {
+  color: var(--ink-mute);
+  font-size: var(--t-sm);
+  max-width: 48ch;
+}
+
+.footer__links {
+  display: flex;
+  gap: 20px;
+  font-size: var(--t-sm);
+}

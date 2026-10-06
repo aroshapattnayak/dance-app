@@ -1,0 +1,33 @@
+name: Deploy portfolio
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "portfolio/**"
+      - ".github/workflows/deploy-portfolio.yml"
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: portfolio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: portfolio/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Publish to aroshapattnayak.github.io
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.PORTFOLIO_DEPLOY_TOKEN }}
+          external_repository: aroshapattnayak/aroshapattnayak.github.io
+          publish_branch: main
+          publish_dir: ./portfolio/dist
+          cname: ""

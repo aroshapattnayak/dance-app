@@ -1,0 +1,67 @@
+:root {
+  /* Base palette */
+  --paper: #fafaf7;
+  --paper-2: #f1f1ec;
+  --ink: #14142b;
+  --ink-soft: #4f4f68;
+  --ink-mute: #8a8aa0;
+  --line: #e3e3ea;
+
+  /* The one bold accent */
+  --accent: #c0269f;
+  --accent-press: #6a1b9a;
+  --accent-tint: #fbe6f6;
+  --accent-ink: #5e0a5a;
+  --pink: #ec4899;
+  --violet: #7c3aed;
+  --accent-gradient: linear-gradient(135deg, var(--pink) 0%, var(--violet) 100%);
+
+  /* Project worlds (used only inside their case studies) */
+  --amber: #f5b700;
+  --amber-deep: #7a4f00;
+  --amber-tint: #fff4cc;
+  --amber-paper: #fbf3df;
+  --ember: #ff5a36;
+  --ember-deep: #7a1f0c;
+  --ember-tint: #ffe4dc;
+
+  /* Type */
+  --font: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --t-xs: 0.8125rem;
+  --t-sm: 0.9375rem;
+  --t-base: 1.0625rem;
+  --t-lg: 1.25rem;
+  --t-xl: 1.5rem;
+  --t-2xl: 2rem;
+  --t-3xl: clamp(2rem, 4vw, 2.875rem);
+  --t-4xl: clamp(2.75rem, 7vw, 5.5rem);
+
+  /* Layout */
+  --max: 1120px;
+  --gutter: clamp(16px, 4vw, 48px);
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 40px;
+  --space-5: 64px;
+  --space-6: 104px;
+  --space-7: 160px;
+
+  /* Shape */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 36px;
+
+  /* Motion */
+  --spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --space-5: 48px;
+    --space-6: 72px;
+    --space-7: 104px;
+  }
+}

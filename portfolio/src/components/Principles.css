@@ -1,0 +1,127 @@
+.prin {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.prin__list {
+  display: grid;
+  gap: 6px;
+}
+
+.prin__tab {
+  width: 100%;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  border: 2px solid transparent;
+  background: transparent;
+  font-weight: 600;
+  font-size: var(--t-base);
+  color: var(--ink-soft);
+  transition: background 0.2s, color 0.2s, transform 0.15s var(--snap), border-color 0.2s;
+}
+
+.prin__tab:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+
+.prin__tab.is-active {
+  background: white;
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: 0 3px 0 0 var(--line);
+}
+
+.prin__num {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--line);
+  transition: background 0.2s, transform 0.2s var(--snap);
+}
+
+.prin__tab:hover .prin__num {
+  background: var(--ink-mute);
+}
+
+.prin__tab.is-active .prin__num {
+  background: var(--accent);
+  transform: rotate(45deg) scale(1.1);
+}
+
+.prin__panel {
+  background: white;
+  border: 2px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--space-4);
+  min-height: 320px;
+  box-shadow: 0 4px 0 0 var(--line);
+}
+
+.prin__title {
+  font-size: var(--t-2xl);
+  margin-bottom: var(--space-2);
+}
+
+.prin__body {
+  color: var(--ink-soft);
+  font-size: var(--t-lg);
+  margin-bottom: var(--space-3);
+}
+
+.prin__proof {
+  border-top: 2px solid var(--accent-tint);
+  padding-top: var(--space-2);
+  display: grid;
+  gap: 6px;
+}
+
+.prin__proof-label {
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.prin__proof p {
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .prin {
+    grid-template-columns: 1fr;
+  }
+  .prin__list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
+  }
+  .prin__list li {
+    flex: none;
+  }
+  .prin__tab {
+    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: var(--t-sm);
+  }
+  .prin__tab span:last-child {
+    display: none;
+  }
+  .prin__tab.is-active span:last-child {
+    display: inline;
+  }
+  .prin__panel {
+    min-height: 0;
+    padding: var(--space-3);
+  }
+}

@@ -3,7 +3,7 @@
 
 export const profile = {
   name: "Arosha Pattnayak",
-  title: "Senior Technical Product Manager",
+  title: "Senior Product Manager",
   location: "Austin, Texas",
   email: "aroshapattnayak@gmail.com",
   linkedin: "https://linkedin.com/in/aroshapattnayak",
@@ -79,7 +79,7 @@ export const aiWork = [
 export const experience = [
   {
     company: "G2",
-    role: "Sr. Technical Product Manager, Central & Vendor Experience",
+    role: "Sr. Product Manager, Central & Vendor Experience",
     period: "Feb 2026 – Present",
     location: "Austin, TX",
     bullets: [

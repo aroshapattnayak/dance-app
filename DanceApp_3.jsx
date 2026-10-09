@@ -43,6 +43,9 @@ const parseZelleMessages = (text) => {
   return results;
 };
 
+// ── Zelle scan endpoint (Google Apps Script web app) ─────────────────────────
+const SCAN_URL = "https://script.google.com/macros/s/AKfycbzmNskNdnDFPauSVKbiEzObiwU3kNkGDOIj7YLloqMAfwEPISSVfMAGCNe2obi52NE/exec";
+
 // ── Firestore helpers ─────────────────────────────────────────────────────────
 const db = () => window.db;
 const fsSet = (col, id, data) => { try { db()?.collection(col).doc(id).set(data); } catch(e) { console.error("Firestore write error", e); } };
@@ -1713,11 +1716,10 @@ export default function App() {
   useEffect(() => { window.danceApp = { applyZelleMatches, addToZelleQueue }; }, [applyZelleMatches, addToZelleQueue]);
 
   const requestScan = useCallback(() => {
-    if (!window.db || scanRequested) return;
-    window.db.collection('zelle_queue').doc('_scan_trigger')
-      .set({ id:"_scan_trigger", requestedAt: new Date().toISOString(), processed: false });
+    if (scanRequested || !SCAN_URL || SCAN_URL.startsWith("PASTE")) return;
     setScanRequested(true);
-    setTimeout(() => setScanRequested(false), 120000);
+    fetch(SCAN_URL, { mode: "no-cors" }).catch(() => {});
+    setTimeout(() => setScanRequested(false), 60000);
   }, [scanRequested]);
 
   const renderPage = () => {

@@ -1313,7 +1313,7 @@ const InvoicesPage = ({ students, payments, onInvoice }) => {
 };
 
 // ── Zelle Page ────────────────────────────────────────────────────────────────
-const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, scanRequested }) => {
+const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, scanRequested, onScan }) => {
   const cm = thisMonth();
   const queue = zelleQueue.filter(q => q.id !== "_scan_trigger");
   const pending = queue.filter(q => q.status === "auto" || q.status === "review" || q.status === "unmatched");
@@ -1389,18 +1389,21 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, scanR
       <div style={{ marginBottom:20 }}>
         <h1 style={{ fontFamily:"'DM Serif Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Zelle Payments</h1>
         <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 12px", borderRadius:20, background:C.a50, border:`1px solid ${C.a200}` }}>
-            <Icon name="mail" size={13} color={C.a600}/>
-            <span style={{ fontSize:12, color:C.g500 }}>Scanned daily from email</span>
-          </div>
-          {scanRequested && (
-            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 12px", borderRadius:20, background:"#ecfdf5", border:"1px solid #a7f3d0" }}>
-              <div style={{ width:6, height:6, borderRadius:3, background:"#10b981", animation:"_da_spin 1.2s linear infinite" }}/>
-              <span style={{ fontSize:12, color:"#065f46", fontWeight:600 }}>Scanning email...</span>
-            </div>
-          )}
-          {!scanRequested && lastScanned && (
-            <span style={{ fontSize:11, color:C.g500 }}>Last scan: {fmtD(lastScanned)}</span>
+          <button onClick={onScan} disabled={scanRequested} style={{ ...BTN_BASE, display:"flex", alignItems:"center", gap:6, padding:"6px 14px", borderRadius:20, background:scanRequested?"#ecfdf5":C.b800, border:scanRequested?"1px solid #a7f3d0":"none", color:scanRequested?"#065f46":C.white, fontSize:12, fontWeight:600, cursor:scanRequested?"default":"pointer", opacity:scanRequested?.9:1 }}>
+            {scanRequested ? (
+              <React.Fragment>
+                <div style={{ width:6, height:6, borderRadius:3, background:"#10b981", animation:"_da_spin 1.2s linear infinite" }}/>
+                Scanning email...
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <Icon name="mail" size={13} color={C.white}/>
+                Scan Now
+              </React.Fragment>
+            )}
+          </button>
+          {lastScanned && (
+            <span style={{ fontSize:11, color:C.g500 }}>Last: {fmtD(lastScanned)}</span>
           )}
           {pending.length > 0 && (
             <span style={{ fontSize:12, fontWeight:700, padding:"4px 12px", borderRadius:20, background:C.b700, color:C.white }}>{pending.length} pending</span>
@@ -1709,19 +1712,13 @@ export default function App() {
 
   useEffect(() => { window.danceApp = { applyZelleMatches, addToZelleQueue }; }, [applyZelleMatches, addToZelleQueue]);
 
-  useEffect(() => {
-    if (page !== "messages" || !window.db) return;
+  const requestScan = useCallback(() => {
+    if (!window.db || scanRequested) return;
     const ref = window.db.collection('zelle_queue').doc('_scan_trigger');
-    ref.get().then(doc => {
-      const data = doc.exists ? doc.data() : null;
-      const last = data?.requestedAt ? new Date(data.requestedAt).getTime() : 0;
-      if (Date.now() - last > 5 * 60 * 1000) {
-        ref.set({ id:"_scan_trigger", requestedAt: new Date().toISOString(), processed: false });
-        setScanRequested(true);
-        setTimeout(() => setScanRequested(false), 45000);
-      }
-    }).catch(() => {});
-  }, [page]);
+    ref.set({ id:"_scan_trigger", requestedAt: new Date().toISOString(), processed: false });
+    setScanRequested(true);
+    setTimeout(() => setScanRequested(false), 60000);
+  }, [scanRequested]);
 
   const renderPage = () => {
     switch (page) {
@@ -1729,7 +1726,7 @@ export default function App() {
       case "students":  return <StudentsPage students={students} payments={payments} onAdd={()=>setStuModal("add")} onEdit={s=>setStuModal(s)} onDelete={deleteStu} onInvoice={s=>setInvModal(s)}/>;
       case "payments":  return <PaymentsPage payments={payments} students={students} onAdd={()=>setPayModal("add")} onEdit={p=>setPayModal(p)} onDelete={deletePay}/>;
       case "invoices":  return <InvoicesPage students={students} payments={payments} onInvoice={s=>setInvModal(s)}/>;
-      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle} scanRequested={scanRequested}/>;
+      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle} scanRequested={scanRequested} onScan={requestScan}/>;
     }
   };
 

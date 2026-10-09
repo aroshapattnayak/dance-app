@@ -1313,15 +1313,16 @@ const InvoicesPage = ({ students, payments, onInvoice }) => {
 };
 
 // ── Zelle Page ────────────────────────────────────────────────────────────────
-const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss }) => {
+const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, scanRequested }) => {
   const cm = thisMonth();
-  const pending = zelleQueue.filter(q => q.status === "auto" || q.status === "review" || q.status === "unmatched");
+  const queue = zelleQueue.filter(q => q.id !== "_scan_trigger");
+  const pending = queue.filter(q => q.status === "auto" || q.status === "review" || q.status === "unmatched");
   const autoItems = pending.filter(q => q.status === "auto");
   const reviewItems = pending.filter(q => q.status === "review");
   const unmatchedItems = pending.filter(q => q.status === "unmatched");
-  const recentDone = zelleQueue.filter(q => q.status === "approved" || q.status === "dismissed").sort((a,b) => (b.resolvedAt||"").localeCompare(a.resolvedAt||"")).slice(0, 10);
+  const recentDone = queue.filter(q => q.status === "approved" || q.status === "dismissed").sort((a,b) => (b.resolvedAt||"").localeCompare(a.resolvedAt||"")).slice(0, 10);
 
-  const lastScanned = zelleQueue.reduce((latest, q) => q.scannedAt && q.scannedAt > latest ? q.scannedAt : latest, "");
+  const lastScanned = queue.reduce((latest, q) => q.scannedAt && q.scannedAt > latest ? q.scannedAt : latest, "");
 
   const [monthSel, setMonthSel] = useState({});
   const suggestedCount = (q) => {
@@ -1392,7 +1393,13 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss }) => 
             <Icon name="mail" size={13} color={C.a600}/>
             <span style={{ fontSize:12, color:C.g500 }}>Scanned daily from email</span>
           </div>
-          {lastScanned && (
+          {scanRequested && (
+            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 12px", borderRadius:20, background:"#ecfdf5", border:"1px solid #a7f3d0" }}>
+              <div style={{ width:6, height:6, borderRadius:3, background:"#10b981", animation:"_da_spin 1.2s linear infinite" }}/>
+              <span style={{ fontSize:12, color:"#065f46", fontWeight:600 }}>Scanning email...</span>
+            </div>
+          )}
+          {!scanRequested && lastScanned && (
             <span style={{ fontSize:11, color:C.g500 }}>Last scan: {fmtD(lastScanned)}</span>
           )}
           {pending.length > 0 && (
@@ -1556,6 +1563,7 @@ export default function App() {
 
   const [quickPay, setQuickPay] = useState(false);
   const [syncStatus, setSyncStatus] = useState("loading"); // loading | synced | offline
+  const [scanRequested, setScanRequested] = useState(false);
   const writeLock = useRef(0); // suppress onSnapshot briefly after local writes
 
   // ── Firestore: migrate seed data + real-time sync ──
@@ -1701,13 +1709,27 @@ export default function App() {
 
   useEffect(() => { window.danceApp = { applyZelleMatches, addToZelleQueue }; }, [applyZelleMatches, addToZelleQueue]);
 
+  useEffect(() => {
+    if (page !== "messages" || !window.db) return;
+    const ref = window.db.collection('zelle_queue').doc('_scan_trigger');
+    ref.get().then(doc => {
+      const data = doc.exists ? doc.data() : null;
+      const last = data?.requestedAt ? new Date(data.requestedAt).getTime() : 0;
+      if (Date.now() - last > 5 * 60 * 1000) {
+        ref.set({ id:"_scan_trigger", requestedAt: new Date().toISOString(), processed: false });
+        setScanRequested(true);
+        setTimeout(() => setScanRequested(false), 45000);
+      }
+    }).catch(() => {});
+  }, [page]);
+
   const renderPage = () => {
     switch (page) {
       case "dashboard": return <Dashboard students={students} payments={payments} setPage={setPage} addPayment={()=>setPayModal("add")} addStudent={()=>setStuModal("add")}/>;
       case "students":  return <StudentsPage students={students} payments={payments} onAdd={()=>setStuModal("add")} onEdit={s=>setStuModal(s)} onDelete={deleteStu} onInvoice={s=>setInvModal(s)}/>;
       case "payments":  return <PaymentsPage payments={payments} students={students} onAdd={()=>setPayModal("add")} onEdit={p=>setPayModal(p)} onDelete={deletePay}/>;
       case "invoices":  return <InvoicesPage students={students} payments={payments} onInvoice={s=>setInvModal(s)}/>;
-      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle}/>;
+      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle} scanRequested={scanRequested}/>;
     }
   };
 

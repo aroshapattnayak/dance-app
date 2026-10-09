@@ -10,5 +10,8 @@ service cloud.firestore {
     match /zelle_queue/{doc} {
       allow read, write: if true;
     }
+    match /settings/{doc} {
+      allow read, write: if true;
+    }
   }
 }

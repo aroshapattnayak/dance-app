@@ -1313,7 +1313,7 @@ const InvoicesPage = ({ students, payments, onInvoice }) => {
 };
 
 // ── Zelle Page ────────────────────────────────────────────────────────────────
-const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss }) => {
+const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss, scanRequested, onScan }) => {
   const cm = thisMonth();
   const queue = zelleQueue.filter(q => q.id !== "_scan_trigger");
   const pending = queue.filter(q => q.status === "auto" || q.status === "review" || q.status === "unmatched");
@@ -1389,10 +1389,19 @@ const ZellePage = ({ students, payments, zelleQueue, onApprove, onDismiss }) => 
       <div style={{ marginBottom:20 }}>
         <h1 style={{ fontFamily:"'DM Serif Display',serif", color:C.b900, fontSize:24, marginBottom:6 }}>Zelle Payments</h1>
         <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 12px", borderRadius:20, background:C.a50, border:`1px solid ${C.a200}` }}>
-            <Icon name="mail" size={13} color={C.a600}/>
-            <span style={{ fontSize:12, color:C.g500 }}>Scanned from email</span>
-          </div>
+          <button onClick={onScan} disabled={scanRequested} style={{ ...BTN_BASE, display:"flex", alignItems:"center", gap:6, padding:"6px 14px", borderRadius:20, background:scanRequested?"#ecfdf5":C.b800, border:scanRequested?"1px solid #a7f3d0":"none", color:scanRequested?"#065f46":C.white, fontSize:12, fontWeight:600, cursor:scanRequested?"default":"pointer" }}>
+            {scanRequested ? (
+              <React.Fragment>
+                <div style={{ width:6, height:6, borderRadius:3, background:"#10b981", animation:"_da_spin 1.2s linear infinite" }}/>
+                Scanning...
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <Icon name="mail" size={13} color={C.white}/>
+                Scan Now
+              </React.Fragment>
+            )}
+          </button>
           {lastScanned && (
             <span style={{ fontSize:11, color:C.g500 }}>Last: {fmtD(lastScanned)}</span>
           )}
@@ -1557,6 +1566,7 @@ export default function App() {
 
   const [quickPay, setQuickPay] = useState(false);
   const [syncStatus, setSyncStatus] = useState("loading"); // loading | synced | offline
+  const [scanRequested, setScanRequested] = useState(false);
   const writeLock = useRef(0); // suppress onSnapshot briefly after local writes
 
   // ── Firestore: migrate seed data + real-time sync ──
@@ -1702,13 +1712,21 @@ export default function App() {
 
   useEffect(() => { window.danceApp = { applyZelleMatches, addToZelleQueue }; }, [applyZelleMatches, addToZelleQueue]);
 
+  const requestScan = useCallback(() => {
+    if (!window.db || scanRequested) return;
+    window.db.collection('zelle_queue').doc('_scan_trigger')
+      .set({ id:"_scan_trigger", requestedAt: new Date().toISOString(), processed: false });
+    setScanRequested(true);
+    setTimeout(() => setScanRequested(false), 120000);
+  }, [scanRequested]);
+
   const renderPage = () => {
     switch (page) {
       case "dashboard": return <Dashboard students={students} payments={payments} setPage={setPage} addPayment={()=>setPayModal("add")} addStudent={()=>setStuModal("add")}/>;
       case "students":  return <StudentsPage students={students} payments={payments} onAdd={()=>setStuModal("add")} onEdit={s=>setStuModal(s)} onDelete={deleteStu} onInvoice={s=>setInvModal(s)}/>;
       case "payments":  return <PaymentsPage payments={payments} students={students} onAdd={()=>setPayModal("add")} onEdit={p=>setPayModal(p)} onDelete={deletePay}/>;
       case "invoices":  return <InvoicesPage students={students} payments={payments} onInvoice={s=>setInvModal(s)}/>;
-      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle}/>;
+      case "messages":  return <ZellePage students={students} payments={payments} zelleQueue={zelleQueue} onApprove={approveZelle} onDismiss={dismissZelle} scanRequested={scanRequested} onScan={requestScan}/>;
     }
   };
 
